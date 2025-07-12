@@ -115,6 +115,23 @@ function renderLives() {
         livesDiv.appendChild(heart);
     }
     
+    // Добавляем эффект вспышки для только что потерянных сердечек
+    const currentTime = Date.now();
+    if (currentTime - lastHeartLoss < 1000) { // В течение 1 секунды после потери
+        const lostHearts = livesDiv.querySelectorAll('.heart.lost');
+        if (lostHearts.length > 0) {
+            const lastLostHeart = lostHearts[lostHearts.length - 1];
+            const flashElement = document.createElement('div');
+            flashElement.className = 'crack-flash';
+            lastLostHeart.appendChild(flashElement);
+            setTimeout(() => {
+                if (flashElement.parentNode) {
+                    flashElement.parentNode.removeChild(flashElement);
+                }
+            }, 300);
+        }
+    }
+    
     // Эффект блика каждые 3 секунды
     heartShineTimer++;
     if (heartShineTimer >= 180) { // 180 кадров = 3 секунды при 60 FPS
@@ -177,19 +194,20 @@ function createHeartParticles() {
         const heartX = rect.left - gameRect.left + rect.width / 2;
         const heartY = rect.top - gameRect.top + rect.height / 2;
         
-        const count = 15;
-        const colors = ['#ff1744', '#d50000', '#b71c1c', '#ff6b6b'];
+        const count = 12;
+        const colors = ['#ff1744', '#d50000', '#b71c1c', '#ff6b6b', '#ff8a80'];
         
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * 2 * Math.PI;
-            const speed = 2 + Math.random() * 3;
+            const speed = 1.5 + Math.random() * 2.5;
             particles.push({
-                x: heartX,
-                y: heartY,
+                x: heartX + (Math.random() - 0.5) * 10, // Небольшой разброс от центра
+                y: heartY + (Math.random() - 0.5) * 10,
                 dx: Math.cos(angle) * speed,
                 dy: Math.sin(angle) * speed,
-                life: 40 + Math.random() * 30,
-                color: colors[Math.floor(Math.random() * colors.length)]
+                life: 35 + Math.random() * 25,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                type: 'heart' // Маркируем как частицу сердечка
             });
         }
     }
@@ -265,15 +283,15 @@ function drawParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         
-        // Определяем, является ли частица сердечком (по цвету)
-        const isHeartParticle = ['#ff1744', '#d50000', '#b71c1c', '#ff6b6b'].includes(p.color);
+        // Определяем, является ли частица сердечком
+        const isHeartParticle = p.type === 'heart' || ['#ff1744', '#d50000', '#b71c1c', '#ff6b6b', '#ff8a80'].includes(p.color);
         
         if (isHeartParticle) {
             // Рисуем маленькое сердечко
-            const size = Math.max(1, p.life / 10);
+            const size = Math.max(0.8, p.life / 12);
             ctx.save();
             ctx.translate(p.x, p.y);
-            ctx.scale(size * 0.1, size * 0.1);
+            ctx.scale(size * 0.08, size * 0.08);
             ctx.fillStyle = p.color;
             ctx.beginPath();
             ctx.moveTo(0, -1);
@@ -291,7 +309,7 @@ function drawParticles() {
         
         p.x += p.dx;
         p.y += p.dy;
-        p.dy += 0.08; // гравитация
+        p.dy += 0.06; // гравитация (меньше для частиц сердечек)
         p.life--;
         if (p.life <= 0) {
             particles.splice(i, 1);
@@ -421,7 +439,7 @@ function draw() {
                     // Создаем частицы сердечка
                     setTimeout(() => {
                         createHeartParticles();
-                    }, 100);
+                    }, 200); // Увеличиваем задержку, чтобы трещина появилась сначала
                     if (lives > 0) {
                         resetBallAndPaddle();
                     } else {
