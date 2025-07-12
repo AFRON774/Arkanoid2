@@ -5,7 +5,10 @@ class GameMenu {
         this.gameArea = document.getElementById('gameArea');
         this.playButton = document.getElementById('playButton');
         this.menuMusicBtn = document.getElementById('menuMusicBtn');
+        this.level1Button = document.getElementById('level1Button');
+        this.level2Button = document.getElementById('level2Button');
         this.menuMusicWasPlaying = false; // Запоминаем состояние музыки меню
+        this.selectedLevel = 1; // По умолчанию выбран уровень 1
         
         this.init();
     }
@@ -17,6 +20,15 @@ class GameMenu {
         // Добавляем обработчик для кнопки "Играть"
         this.playButton.addEventListener('click', () => {
             this.startGame();
+        });
+
+        // Добавляем обработчики для кнопок уровней
+        this.level1Button.addEventListener('click', () => {
+            this.selectLevel(1);
+        });
+
+        this.level2Button.addEventListener('click', () => {
+            this.selectLevel(2);
         });
 
         // Добавляем обработчик для кнопки музыки в меню
@@ -100,6 +112,16 @@ class GameMenu {
         }
     }
 
+    selectLevel(level) {
+        this.selectedLevel = level;
+        
+        // Обновляем активную кнопку
+        this.level1Button.classList.toggle('active', level === 1);
+        this.level2Button.classList.toggle('active', level === 2);
+        
+        console.log(`Выбран уровень ${level}`);
+    }
+
     hideMenu() {
         this.menuElement.style.display = 'none';
         this.gameArea.style.display = 'block';
@@ -119,6 +141,11 @@ class GameMenu {
             if (audioManager.musicEnabled) {
                 audioManager.startBackgroundMusic();
             }
+        }
+        
+        // Устанавливаем выбранный уровень
+        if (typeof currentLevel !== 'undefined') {
+            currentLevel = this.selectedLevel;
         }
         
         // Запускаем игру

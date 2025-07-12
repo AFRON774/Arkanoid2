@@ -26,10 +26,25 @@ let dy = -2;
 
 // Блоки
 let bricks = [];
-for(let c = 0; c < brickColumnCount; c++) {
-    bricks[c] = [];
-    for(let r = 0; r < brickRowCount; r++) {
-        bricks[c][r] = { x: 0, y: 0, status: 1 };
+
+// Функция загрузки уровня
+function loadLevel(level) {
+    bricks = [];
+    for(let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for(let r = 0; r < brickRowCount; r++) {
+            let status = 1; // По умолчанию блок активен
+            
+            // Уровень 2: убираем среднюю вертикальную полосу
+            if (level === 2) {
+                const middleColumn = Math.floor(brickColumnCount / 2); // 3-я колонка (индекс 3)
+                if (c === middleColumn) {
+                    status = 0; // Блок неактивен
+                }
+            }
+            
+            bricks[c][r] = { x: 0, y: 0, status: status };
+        }
     }
 }
 
@@ -44,6 +59,10 @@ let fireworksTimer = 0;
 let lives = 3;
 let lastHeartLoss = 0; // Время последней потери сердца
 let heartShineTimer = 0; // Таймер для эффекта блика
+
+// Система уровней
+let currentLevel = 1;
+let totalLevels = 2;
 
 let startTime = Date.now();
 let gameOver = false;
@@ -162,7 +181,7 @@ function renderTimer() {
     }
     let minutes = Math.floor(elapsed / 60);
     let seconds = elapsed % 60;
-    timerDiv.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    timerDiv.textContent = `Уровень ${currentLevel} | ${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // Функция генерации частиц для блока
@@ -360,17 +379,37 @@ function collisionDetection() {
     }
     // Если все блоки уничтожены и салют ещё не запущен
     if(allBricksDestroyed && !fireworksActive) {
-        // Звук победы
-        if (typeof audioManager !== 'undefined') {
-            audioManager.playVictory();
-        }
-        launchFireworks();
-        // Аплодисменты во время салюта
-        setTimeout(() => {
+        // Проверяем, есть ли следующий уровень
+        if (currentLevel < totalLevels) {
+            // Переходим на следующий уровень
+            currentLevel++;
+            console.log(`Переход на уровень ${currentLevel}`);
+            
+            // Загружаем новый уровень
+            loadLevel(currentLevel);
+            
+            // Сбрасываем позиции
+            resetBallAndPaddle();
+            
+            // Небольшая пауза перед следующим уровнем
+            setTimeout(() => {
+                // Продолжаем игру
+            }, 1000);
+            
+        } else {
+            // Это последний уровень - показываем победу
+            // Звук победы
             if (typeof audioManager !== 'undefined') {
-                audioManager.playApplause();
+                audioManager.playVictory();
             }
-        }, 500); // Начинаем аплодисменты через 0.5 секунды после начала салюта
+            launchFireworks();
+            // Аплодисменты во время салюта
+            setTimeout(() => {
+                if (typeof audioManager !== 'undefined') {
+                    audioManager.playApplause();
+                }
+            }, 500); // Начинаем аплодисменты через 0.5 секунды после начала салюта
+        }
     }
 }
 
@@ -476,6 +515,7 @@ function initGame() {
     lives = 3;
     lastHeartLoss = 0;
     heartShineTimer = 0;
+    // currentLevel устанавливается из меню
     gameOver = false;
     gameWon = false;
     fireworksActive = false;
@@ -488,12 +528,8 @@ function initGame() {
     // Сброс позиций
     resetBallAndPaddle();
     
-    // Восстановление блоков
-    for(let c = 0; c < brickColumnCount; c++) {
-        for(let r = 0; r < brickRowCount; r++) {
-            bricks[c][r].status = 1;
-        }
-    }
+    // Загружаем выбранный уровень
+    loadLevel(currentLevel);
     
     // Запуск игрового цикла
     draw();
@@ -525,4 +561,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (testButton) {
         testButton.addEventListener('click', testHeartCrack);
     }
-}); 
+    
+    const switchLevelButton = document.getElementById('switchLevel');
+    if (switchLevelButton) {
+        switchLevelButton.addEventListener('click', switchLevel);
+    }
+});
+
+// Функция переключения уровня
+function switchLevel() {
+    currentLevel = currentLevel === 1 ? 2 : 1;
+    console.log(`Переключение на уровень ${currentLevel}`);
+    
+    // Загружаем новый уровень
+    loadLevel(currentLevel);
+    
+    // Сбрасываем позиции
+    resetBallAndPaddle();
+    
+    // Обновляем отображение
+    renderTimer();
+} 

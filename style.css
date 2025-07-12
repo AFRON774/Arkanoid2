@@ -388,6 +388,42 @@ canvas {
     background: linear-gradient(45deg, #ff5252, #ff8c00);
 }
 
+/* Кнопки выбора уровня */
+.level-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.level-button {
+    font-size: 18px;
+    padding: 12px 25px;
+    border: 2px solid #fff;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.level-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.level-button.active {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    border-color: #4CAF50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+}
+
 @keyframes buttonPulse {
     0%, 100% {
         transform: scale(1);
