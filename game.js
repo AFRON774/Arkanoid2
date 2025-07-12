@@ -42,6 +42,8 @@ let fireworksTimer = 0;
 
 // Жизни
 let lives = 3;
+let lastHeartLoss = 0; // Время последней потери сердца
+let heartShineTimer = 0; // Таймер для эффекта блика
 
 let startTime = Date.now();
 let gameOver = false;
@@ -87,11 +89,43 @@ function renderLives() {
     const livesDiv = document.getElementById('lives');
     if (!livesDiv) return;
     livesDiv.innerHTML = '';
+    
+    // Добавляем градиент для сердечек
+    const svgDefs = `
+        <svg width="0" height="0" style="position: absolute;">
+            <defs>
+                <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff1744;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#d50000;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#b71c1c;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+        </svg>
+    `;
+    livesDiv.insertAdjacentHTML('beforeend', svgDefs);
+    
     for (let i = 0; i < 3; i++) {
         const heart = document.createElement('span');
         heart.className = 'heart' + (i >= lives ? ' lost' : '');
-        heart.innerHTML = `<svg viewBox="0 0 32 32"><path fill="red" d="M23.6,4.6c-2.1,0-4,1-5.6,2.7C16.4,5.6,14.5,4.6,12.4,4.6C8.1,4.6,4.6,8.1,4.6,12.4c0,7.2,10.2,13.2,11.1,13.7 c0.2,0.1,0.5,0.1,0.7,0c0.9-0.5,11.1-6.5,11.1-13.7C27.4,8.1,23.9,4.6,23.6,4.6z"/></svg>`;
+        heart.innerHTML = `
+            <svg viewBox="0 0 32 32">
+                <path d="M23.6,4.6c-2.1,0-4,1-5.6,2.7C16.4,5.6,14.5,4.6,12.4,4.6C8.1,4.6,4.6,8.1,4.6,12.4c0,7.2,10.2,13.2,11.1,13.7 c0.2,0.1,0.5,0.1,0.7,0c0.9-0.5,11.1-6.5,11.1-13.7C27.4,8.1,23.9,4.6,23.6,4.6z"/>
+            </svg>
+        `;
         livesDiv.appendChild(heart);
+    }
+    
+    // Эффект блика каждые 3 секунды
+    heartShineTimer++;
+    if (heartShineTimer >= 180) { // 180 кадров = 3 секунды при 60 FPS
+        heartShineTimer = 0;
+        const hearts = livesDiv.querySelectorAll('.heart:not(.lost)');
+        hearts.forEach(heart => {
+            heart.classList.add('shine');
+            setTimeout(() => {
+                heart.classList.remove('shine');
+            }, 600);
+        });
     }
 }
 
@@ -125,6 +159,39 @@ function createParticles(x, y, color) {
             life: 30 + Math.random() * 20,
             color: color
         });
+    }
+}
+
+// Функция генерации частиц для сердечка
+function createHeartParticles() {
+    const livesDiv = document.getElementById('lives');
+    if (!livesDiv) return;
+    
+    const hearts = livesDiv.querySelectorAll('.heart');
+    if (hearts.length > lives) {
+        const lostHeart = hearts[lives]; // Сердечко, которое только что потеряли
+        const rect = lostHeart.getBoundingClientRect();
+        const gameArea = document.getElementById('gameArea');
+        const gameRect = gameArea.getBoundingClientRect();
+        
+        const heartX = rect.left - gameRect.left + rect.width / 2;
+        const heartY = rect.top - gameRect.top + rect.height / 2;
+        
+        const count = 15;
+        const colors = ['#ff1744', '#d50000', '#b71c1c', '#ff6b6b'];
+        
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * 2 * Math.PI;
+            const speed = 2 + Math.random() * 3;
+            particles.push({
+                x: heartX,
+                y: heartY,
+                dx: Math.cos(angle) * speed,
+                dy: Math.sin(angle) * speed,
+                life: 40 + Math.random() * 30,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+        }
     }
 }
 
@@ -197,8 +264,31 @@ function drawBricks() {
 function drawParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, 2, 2);
+        
+        // Определяем, является ли частица сердечком (по цвету)
+        const isHeartParticle = ['#ff1744', '#d50000', '#b71c1c', '#ff6b6b'].includes(p.color);
+        
+        if (isHeartParticle) {
+            // Рисуем маленькое сердечко
+            const size = Math.max(1, p.life / 10);
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.scale(size * 0.1, size * 0.1);
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.moveTo(0, -1);
+            ctx.bezierCurveTo(-1, -2, -2, -1, -2, 0);
+            ctx.bezierCurveTo(-2, 1, -1, 2, 0, 1);
+            ctx.bezierCurveTo(1, 2, 2, 1, 2, 0);
+            ctx.bezierCurveTo(2, -1, 1, -2, 0, -1);
+            ctx.fill();
+            ctx.restore();
+        } else {
+            // Обычная частица
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x, p.y, 2, 2);
+        }
+        
         p.x += p.dx;
         p.y += p.dy;
         p.dy += 0.08; // гравитация
@@ -323,10 +413,15 @@ function draw() {
                 }
                             } else if(y + dy > canvas.height - ballRadius) {
                     lives--;
+                    lastHeartLoss = Date.now();
                     // Звук потери жизни
                     if (typeof audioManager !== 'undefined') {
                         audioManager.playLifeLost();
                     }
+                    // Создаем частицы сердечка
+                    setTimeout(() => {
+                        createHeartParticles();
+                    }, 100);
                     if (lives > 0) {
                         resetBallAndPaddle();
                     } else {
@@ -358,6 +453,8 @@ function draw() {
 function initGame() {
     // Сброс всех переменных игры
     lives = 3;
+    lastHeartLoss = 0;
+    heartShineTimer = 0;
     gameOver = false;
     gameWon = false;
     fireworksActive = false;
