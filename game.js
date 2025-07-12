@@ -144,6 +144,9 @@ function renderLives() {
             }, 600);
         });
     }
+    
+    // Отладочная информация
+    console.log('Lives:', lives, 'Lost hearts:', livesDiv.querySelectorAll('.heart.lost').length);
 }
 
 function renderTimer() {
@@ -499,4 +502,27 @@ function initGame() {
 // Запускаем игру только если меню не активно
 if (document.getElementById('gameMenu').style.display === 'none') {
     initGame();
-} 
+}
+
+// Тестовая функция для проверки трещин
+function testHeartCrack() {
+    if (lives > 0) {
+        lives--;
+        lastHeartLoss = Date.now();
+        console.log('Тест: потеряна жизнь, осталось:', lives);
+        renderLives();
+        
+        // Создаем частицы через 200мс
+        setTimeout(() => {
+            createHeartParticles();
+        }, 200);
+    }
+}
+
+// Добавляем обработчик для тестовой кнопки
+document.addEventListener('DOMContentLoaded', function() {
+    const testButton = document.getElementById('testCrack');
+    if (testButton) {
+        testButton.addEventListener('click', testHeartCrack);
+    }
+}); 
