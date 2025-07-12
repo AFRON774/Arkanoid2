@@ -3,12 +3,24 @@ class GameMenu {
     constructor() {
         this.menuElement = document.getElementById('gameMenu');
         this.gameArea = document.getElementById('gameArea');
+        this.levelMap = document.getElementById('levelMap');
+        this.skinsWindow = document.getElementById('skinsWindow');
         this.playButton = document.getElementById('playButton');
+        this.skinsButton = document.getElementById('skinsButton');
         this.menuMusicBtn = document.getElementById('menuMusicBtn');
-        this.level1Button = document.getElementById('level1Button');
-        this.level2Button = document.getElementById('level2Button');
+        this.backToMenuBtn = document.getElementById('backToMenu');
+        this.closeSkinsBtn = document.getElementById('closeSkins');
+        this.backToMenuFromSkinsBtn = document.getElementById('backToMenuFromSkins');
         this.menuMusicWasPlaying = false; // Запоминаем состояние музыки меню
         this.selectedLevel = 1; // По умолчанию выбран уровень 1
+        
+        // Скины
+        this.selectedPaddleSkin = 'classic';
+        this.selectedBallSkin = 'classic';
+        this.unlockedSkins = {
+            paddle: ['classic'],
+            ball: ['classic']
+        };
         
         this.init();
     }
@@ -19,17 +31,33 @@ class GameMenu {
         
         // Добавляем обработчик для кнопки "Играть"
         this.playButton.addEventListener('click', () => {
-            this.startGame();
+            this.showLevelMap();
         });
 
-        // Добавляем обработчики для кнопок уровней
-        this.level1Button.addEventListener('click', () => {
-            this.selectLevel(1);
+        // Добавляем обработчик для кнопки "Скины"
+        this.skinsButton.addEventListener('click', () => {
+            this.showSkinsWindow();
         });
 
-        this.level2Button.addEventListener('click', () => {
-            this.selectLevel(2);
+        // Добавляем обработчик для кнопки "Назад в меню"
+        this.backToMenuBtn.addEventListener('click', () => {
+            this.showMenu();
         });
+
+        // Добавляем обработчики для окна скинов
+        this.closeSkinsBtn.addEventListener('click', () => {
+            this.showMenu();
+        });
+
+        this.backToMenuFromSkinsBtn.addEventListener('click', () => {
+            this.showMenu();
+        });
+
+        // Добавляем обработчики для уровней на карте
+        this.addLevelMapHandlers();
+
+        // Добавляем обработчики для скинов
+        this.addSkinsHandlers();
 
         // Добавляем обработчик для кнопки музыки в меню
         this.menuMusicBtn.addEventListener('click', () => {
@@ -39,7 +67,7 @@ class GameMenu {
         // Добавляем обработчик для клавиши Enter
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && this.menuElement.style.display !== 'none') {
-                this.startGame();
+                this.showLevelMap();
             }
         });
     }
@@ -47,6 +75,8 @@ class GameMenu {
     showMenu() {
         this.menuElement.style.display = 'flex';
         this.gameArea.style.display = 'none';
+        this.levelMap.style.display = 'none';
+        this.skinsWindow.style.display = 'none';
         
         // Останавливаем игру если она была запущена
         if (typeof game !== 'undefined' && game.isRunning) {
@@ -112,18 +142,119 @@ class GameMenu {
         }
     }
 
-    selectLevel(level) {
-        this.selectedLevel = level;
+    showLevelMap() {
+        this.menuElement.style.display = 'none';
+        this.levelMap.style.display = 'flex';
+    }
+
+    addLevelMapHandlers() {
+        const levelNodes = document.querySelectorAll('.level-node');
+        levelNodes.forEach(node => {
+            node.addEventListener('click', () => {
+                const level = parseInt(node.dataset.level);
+                if (level <= 5) { // Пока доступны все 5 уровней
+                    this.selectedLevel = level;
+                    console.log(`Выбран уровень ${level}`);
+                    this.startGame();
+                }
+            });
+        });
+    }
+
+    showSkinsWindow() {
+        this.menuElement.style.display = 'none';
+        this.skinsWindow.style.display = 'flex';
+        this.updateSkinsDisplay();
+    }
+
+    addSkinsHandlers() {
+        const skinItems = document.querySelectorAll('.skin-item');
+        skinItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (!item.classList.contains('locked')) {
+                    const type = item.dataset.type;
+                    const skin = item.dataset.skin;
+                    this.selectSkin(type, skin);
+                }
+            });
+        });
+    }
+
+    selectSkin(type, skin) {
+        if (type === 'paddle') {
+            this.selectedPaddleSkin = skin;
+        } else if (type === 'ball') {
+            this.selectedBallSkin = skin;
+        }
+
+        // Обновляем активные элементы
+        document.querySelectorAll(`.skin-item[data-type="${type}"]`).forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`.skin-item[data-type="${type}"][data-skin="${skin}"]`).classList.add('active');
+
+        // Обновляем превью
+        this.updatePreview();
+    }
+
+    updatePreview() {
+        const previewPaddle = document.getElementById('previewPaddle');
+        const previewBall = document.getElementById('previewBall');
+
+        // Обновляем превью доски
+        previewPaddle.className = `preview-paddle ${this.selectedPaddleSkin}-paddle`;
+
+        // Обновляем превью шара
+        previewBall.className = `preview-ball ${this.selectedBallSkin}-ball`;
+    }
+
+    updateSkinsDisplay() {
+        // Проверяем, какие скины разблокированы
+        const maxUnlockedLevel = this.getMaxUnlockedLevel();
         
-        // Обновляем активную кнопку
-        this.level1Button.classList.toggle('active', level === 1);
-        this.level2Button.classList.toggle('active', level === 2);
-        
-        console.log(`Выбран уровень ${level}`);
+        // Разблокируем скин улыбки после 2 уровня
+        if (maxUnlockedLevel >= 2) {
+            this.unlockSkin('ball', 'smiley');
+        }
+
+        // Обновляем отображение скинов
+        document.querySelectorAll('.skin-item').forEach(item => {
+            const type = item.dataset.type;
+            const skin = item.dataset.skin;
+            const requirement = item.dataset.requirement;
+
+            if (requirement) {
+                const requiredLevel = parseInt(requirement.replace('level', ''));
+                if (maxUnlockedLevel >= requiredLevel) {
+                    item.classList.remove('locked');
+                    if (!this.unlockedSkins[type].includes(skin)) {
+                        this.unlockedSkins[type].push(skin);
+                    }
+                } else {
+                    item.classList.add('locked');
+                }
+            }
+        });
+
+        this.updatePreview();
+    }
+
+    unlockSkin(type, skin) {
+        if (!this.unlockedSkins[type].includes(skin)) {
+            this.unlockedSkins[type].push(skin);
+        }
+    }
+
+    getMaxUnlockedLevel() {
+        // В реальной игре это должно читаться из сохранений
+        // Пока возвращаем 2 для демонстрации
+        return 2;
     }
 
     hideMenu() {
         this.menuElement.style.display = 'none';
+        this.levelMap.style.display = 'none';
+        this.skinsWindow.style.display = 'none';
         this.gameArea.style.display = 'block';
     }
 

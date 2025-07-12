@@ -21,8 +21,8 @@ let leftPressed = false;
 // Шарик
 let x = canvas.width / 2;
 let y = canvas.height - 30;
-let dx = 2;
-let dy = -2;
+let dx = 3;
+let dy = -3;
 
 // Блоки
 let bricks = [];
@@ -40,6 +40,27 @@ function loadLevel(level) {
                 const middleColumn = Math.floor(brickColumnCount / 2); // 3-я колонка (индекс 3)
                 if (c === middleColumn) {
                     status = 0; // Блок неактивен
+                }
+            }
+            // Уровень 3: убираем угловые блоки
+            else if (level === 3) {
+                if ((c === 0 && r === 0) || (c === brickColumnCount - 1 && r === 0) ||
+                    (c === 0 && r === brickRowCount - 1) || (c === brickColumnCount - 1 && r === brickRowCount - 1)) {
+                    status = 0;
+                }
+            }
+            // Уровень 4: убираем центральный крест
+            else if (level === 4) {
+                const centerColumn = Math.floor(brickColumnCount / 2);
+                const centerRow = Math.floor(brickRowCount / 2);
+                if (c === centerColumn || r === centerRow) {
+                    status = 0;
+                }
+            }
+            // Уровень 5: убираем все блоки кроме границ
+            else if (level === 5) {
+                if (c > 0 && c < brickColumnCount - 1 && r > 0 && r < brickRowCount - 1) {
+                    status = 0;
                 }
             }
             
@@ -62,7 +83,7 @@ let heartShineTimer = 0; // Таймер для эффекта блика
 
 // Система уровней
 let currentLevel = 1;
-let totalLevels = 2;
+let totalLevels = 5;
 
 let startTime = Date.now();
 let gameOver = false;
@@ -416,8 +437,8 @@ function collisionDetection() {
 function resetBallAndPaddle() {
     x = canvas.width / 2;
     y = canvas.height - 30;
-    dx = 2 * (Math.random() > 0.5 ? 1 : -1);
-    dy = -2;
+    dx = 3 * (Math.random() > 0.5 ? 1 : -1);
+    dy = -3;
     paddleX = (canvas.width - paddleWidth) / 2;
 }
 

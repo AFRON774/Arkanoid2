@@ -388,20 +388,226 @@ canvas {
     background: linear-gradient(45deg, #ff5252, #ff8c00);
 }
 
-/* Кнопки выбора уровня */
-.level-buttons {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-    justify-content: center;
+/* Кнопка скинов */
+.skins-button {
+    font-size: 24px;
+    padding: 12px 35px;
+    border: none;
+    border-radius: 50px;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff);
+    background-size: 400% 400%;
+    color: white;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    animation: rainbowShift 3s ease-in-out infinite;
+    margin-top: 20px;
 }
 
-.level-button {
+.skins-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+    animation: rainbowShift 1s ease-in-out infinite;
+}
+
+@keyframes rainbowShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Карта уровней */
+.level-map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.map-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.island-background {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.island {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 60%;
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 30%, #CD853F 60%, #DEB887 100%);
+    border-radius: 50% 50% 0 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.island::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    width: 80%;
+    height: 60%;
+    background: linear-gradient(135deg, #228B22 0%, #32CD32 50%, #90EE90 100%);
+    border-radius: 50% 50% 0 0;
+    box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.level-path {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+.level-node {
+    position: absolute;
+    z-index: 3;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.level-node:hover {
+    transform: scale(1.1);
+}
+
+.level-circle {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    border: 3px solid #8B4513;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #8B4513;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.level-node:hover .level-circle {
+    background: linear-gradient(45deg, #FFA500, #FF8C00);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.level-locked {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 20px;
+    color: #FF0000;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ball-pointer {
+    position: absolute;
+    left: 50px;
+    top: 200px;
+    z-index: 4;
+    animation: ballBounce 2s ease-in-out infinite;
+}
+
+.yellow-ball {
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle at 30% 30%, #FFFF00, #FFD700);
+    border-radius: 50%;
+    border: 2px solid #FFA500;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.yellow-ball::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 8px;
+    height: 8px;
+    background: #000;
+    border-radius: 50%;
+    box-shadow: 16px 0 0 #000;
+}
+
+.yellow-ball::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 10px;
+    border: 2px solid #000;
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+}
+
+.hand-pointer {
+    position: absolute;
+    top: 50px;
+    left: 20px;
+    width: 30px;
+    height: 40px;
+    background: #FFD700;
+    border-radius: 20px 20px 5px 5px;
+    transform: rotate(45deg);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.hand-pointer::before {
+    content: '';
+    position: absolute;
+    top: 35px;
+    left: 15px;
+    width: 8px;
+    height: 15px;
+    background: #FFD700;
+    border-radius: 5px;
+    transform: rotate(-45deg);
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     font-size: 18px;
-    padding: 12px 25px;
+    padding: 10px 20px;
     border: 2px solid #fff;
     border-radius: 25px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
     cursor: pointer;
     font-family: Arial, sans-serif;
@@ -412,16 +618,266 @@ canvas {
     backdrop-filter: blur(10px);
 }
 
-.level-button:hover {
-    background: rgba(255, 255, 255, 0.2);
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.level-button.active {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    border-color: #4CAF50;
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+/* Окно скинов */
+.skins-window {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4000;
+}
+
+.skins-container {
+    width: 800px;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.skins-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.skins-header h2 {
+    color: #fff;
+    font-size: 32px;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.close-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.skin-preview {
+    padding: 20px 30px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.preview-section h3 {
+    color: #fff;
+    font-size: 20px;
+    margin: 0 0 15px 0;
+    font-family: Arial, sans-serif;
+}
+
+.preview-area {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+}
+
+.preview-paddle {
+    width: 120px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.preview-ball {
+    width: 30px;
+    height: 30px;
+    background: #ffeb3b;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+/* Стили для превью скинов */
+.preview-paddle.classic-paddle {
+    background: #ccc;
+}
+
+.preview-ball.classic-ball {
+    background: #ffeb3b;
+}
+
+.preview-ball.smiley-ball {
+    background: #ffeb3b;
+}
+
+.preview-ball.smiley-ball::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+    box-shadow: 10px 0 0 #000;
+}
+
+.preview-ball.smiley-ball::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 8px;
+    border: 2px solid #000;
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+}
+
+.skin-selection {
+    flex: 1;
+    padding: 20px 30px;
+    display: flex;
+    gap: 40px;
+}
+
+.skin-category {
+    flex: 1;
+}
+
+.skin-category h3 {
+    color: #fff;
+    font-size: 18px;
+    margin: 0 0 15px 0;
+    font-family: Arial, sans-serif;
+}
+
+.skin-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.skin-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.skin-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+.skin-item.active {
+    background: rgba(76, 175, 80, 0.3);
+    border: 2px solid #4CAF50;
+}
+
+.skin-item.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.skin-item.locked:hover {
+    transform: none;
+}
+
+.skin-paddle {
+    width: 60px;
+    height: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.classic-paddle {
+    background: #ccc;
+}
+
+.skin-ball {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.classic-ball {
+    background: #ffeb3b;
+}
+
+.smiley-ball {
+    background: #ffeb3b;
+}
+
+.smiley-ball::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 3px;
+    height: 3px;
+    background: #000;
+    border-radius: 50%;
+    box-shadow: 8px 0 0 #000;
+}
+
+.smiley-ball::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 6px;
+    border: 2px solid #000;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+}
+
+.skin-item span {
+    color: #fff;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+}
+
+.lock-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #ff9800;
 }
 
 @keyframes buttonPulse {
