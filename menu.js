@@ -11,6 +11,10 @@ class GameMenu {
         this.backToMenuBtn = document.getElementById('backToMenu');
         this.closeSkinsBtn = document.getElementById('closeSkins');
         this.backToMenuFromSkinsBtn = document.getElementById('backToMenuFromSkins');
+        this.victoryWindow = document.getElementById('victoryWindow');
+        this.nextLevelBtn = document.getElementById('nextLevelBtn');
+        this.replayLevelBtn = document.getElementById('replayLevelBtn');
+        this.backToMenuFromVictoryBtn = document.getElementById('backToMenuFromVictory');
         this.menuMusicWasPlaying = false; // Запоминаем состояние музыки меню
         this.selectedLevel = 1; // По умолчанию выбран уровень 1
         
@@ -53,6 +57,19 @@ class GameMenu {
             this.showMenu();
         });
 
+        // Добавляем обработчики для окна победы
+        this.nextLevelBtn.addEventListener('click', () => {
+            this.nextLevel();
+        });
+
+        this.replayLevelBtn.addEventListener('click', () => {
+            this.replayLevel();
+        });
+
+        this.backToMenuFromVictoryBtn.addEventListener('click', () => {
+            this.showMenu();
+        });
+
         // Добавляем обработчики для уровней на карте
         this.addLevelMapHandlers();
 
@@ -77,6 +94,7 @@ class GameMenu {
         this.gameArea.style.display = 'none';
         this.levelMap.style.display = 'none';
         this.skinsWindow.style.display = 'none';
+        this.victoryWindow.style.display = 'none';
         
         // Останавливаем игру если она была запущена
         if (typeof game !== 'undefined' && game.isRunning) {
@@ -251,10 +269,61 @@ class GameMenu {
         return 2;
     }
 
+    showVictoryWindow(level, time, score) {
+        this.gameArea.style.display = 'none';
+        this.victoryWindow.style.display = 'flex';
+        
+        // Обновляем статистику
+        document.getElementById('victoryTime').textContent = time;
+        document.getElementById('victoryScore').textContent = score;
+        
+        // Сохраняем текущий уровень
+        this.currentVictoryLevel = level;
+        
+        // Проверяем, есть ли следующий уровень
+        if (level >= 5) {
+            this.nextLevelBtn.style.display = 'none';
+        } else {
+            this.nextLevelBtn.style.display = 'block';
+        }
+    }
+
+    nextLevel() {
+        if (this.currentVictoryLevel < 5) {
+            this.selectedLevel = this.currentVictoryLevel + 1;
+            this.hideMenu();
+            
+            // Устанавливаем выбранный уровень
+            if (typeof currentLevel !== 'undefined') {
+                currentLevel = this.selectedLevel;
+            }
+            
+            // Запускаем игру
+            if (typeof initGame === 'function') {
+                initGame();
+            }
+        }
+    }
+
+    replayLevel() {
+        this.hideMenu();
+        
+        // Устанавливаем текущий уровень
+        if (typeof currentLevel !== 'undefined') {
+            currentLevel = this.currentVictoryLevel;
+        }
+        
+        // Запускаем игру
+        if (typeof initGame === 'function') {
+            initGame();
+        }
+    }
+
     hideMenu() {
         this.menuElement.style.display = 'none';
         this.levelMap.style.display = 'none';
         this.skinsWindow.style.display = 'none';
+        this.victoryWindow.style.display = 'none';
         this.gameArea.style.display = 'block';
     }
 

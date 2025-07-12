@@ -90,6 +90,7 @@ let gameOver = false;
 let finalTime = 0;
 let victoryTime = -1;
 let gameWon = false;
+let score = 0;
 
 function showGameOver() {
     const gameoverDiv = document.getElementById('gameover');
@@ -389,6 +390,7 @@ function collisionDetection() {
                 if(x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
                     dy = -dy;
                     b.status = 0;
+                    score += 10; // Увеличиваем счет на 10 очков за блок
                     createParticles(b.x, b.y, brickColors[r % brickColors.length]);
                     // Звук разрушения блока
                     if (typeof audioManager !== 'undefined') {
@@ -400,36 +402,20 @@ function collisionDetection() {
     }
     // Если все блоки уничтожены и салют ещё не запущен
     if(allBricksDestroyed && !fireworksActive) {
-        // Проверяем, есть ли следующий уровень
-        if (currentLevel < totalLevels) {
-            // Переходим на следующий уровень
-            currentLevel++;
-            console.log(`Переход на уровень ${currentLevel}`);
-            
-            // Загружаем новый уровень
-            loadLevel(currentLevel);
-            
-            // Сбрасываем позиции
-            resetBallAndPaddle();
-            
-            // Небольшая пауза перед следующим уровнем
-            setTimeout(() => {
-                // Продолжаем игру
-            }, 1000);
-            
-        } else {
-            // Это последний уровень - показываем победу
-            // Звук победы
-            if (typeof audioManager !== 'undefined') {
-                audioManager.playVictory();
-            }
-            launchFireworks();
-            // Аплодисменты во время салюта
-            setTimeout(() => {
-                if (typeof audioManager !== 'undefined') {
-                    audioManager.playApplause();
-                }
-            }, 500); // Начинаем аплодисменты через 0.5 секунды после начала салюта
+        // Останавливаем игру
+        gameOver = true;
+        
+        // Фиксируем время победы
+        victoryTime = Math.floor((Date.now() - startTime) / 1000);
+        
+        // Звук победы
+        if (typeof audioManager !== 'undefined') {
+            audioManager.playVictory();
+        }
+        
+        // Показываем окно победы
+        if (typeof gameMenu !== 'undefined') {
+            gameMenu.showVictoryWindow(currentLevel, formatTime(victoryTime), score);
         }
     }
 }
@@ -544,6 +530,7 @@ function initGame() {
     particles = [];
     victoryTime = -1;
     finalTime = 0;
+    score = 0;
     startTime = Date.now();
     
     // Сброс позиций

@@ -132,6 +132,31 @@
         </div>
     </div>
     
+    <!-- Окно победы -->
+    <div id="victoryWindow" class="victory-window" style="display:none;">
+        <div class="victory-container">
+            <div class="victory-content">
+                <div class="victory-icon">🏆</div>
+                <h2 class="victory-title">Уровень пройден!</h2>
+                <div class="victory-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Время:</span>
+                        <span id="victoryTime" class="stat-value">00:00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Очки:</span>
+                        <span id="victoryScore" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div class="victory-buttons">
+                    <button id="nextLevelBtn" class="victory-button next-level">Следующий уровень</button>
+                    <button id="replayLevelBtn" class="victory-button replay">Играть заново</button>
+                    <button id="backToMenuFromVictory" class="victory-button menu">В меню</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="audio.js"></script>
     <script src="menu.js"></script>
     <script src="game.js"></script>
