@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Арканоид на JS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Меню игры -->
+    <div id="gameMenu" class="game-menu">
+        <button id="menuMusicBtn" class="menu-music-btn">🎵</button>
+        <div class="menu-content">
+            <h1 class="game-title">Арканоид 2</h1>
+            <button id="playButton" class="play-button">Играть</button>
+        </div>
+        <div class="smiling-ball"></div>
+    </div>
+
+    <!-- Игровая область -->
+    <div id="gameArea" style="display: none;">
+        <div style="display: flex; justify-content: center; align-items: flex-start;">
+            <div id="lives"></div>
+            <div class="game-ui-container">
+                <div id="timer"></div>
+                <canvas id="gameCanvas" width="480" height="320"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div id="gameover" style="display:none;"></div>
+    <script src="audio.js"></script>
+    <script src="menu.js"></script>
+    <script src="game.js"></script>
+</body>
+</html> 

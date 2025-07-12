@@ -1,0 +1,387 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Размеры
+const paddleWidth = 75;
+const paddleHeight = 10;
+const ballRadius = 8;
+const brickRowCount = 5;
+const brickColumnCount = 7;
+const brickWidth = 55;
+const brickHeight = 20;
+const brickPadding = 5;
+const brickOffsetTop = 30;
+const brickOffsetLeft = (canvas.width - (brickColumnCount * brickWidth + (brickColumnCount - 1) * brickPadding)) / 2;
+
+// Платформа
+let paddleX = (canvas.width - paddleWidth) / 2;
+let rightPressed = false;
+let leftPressed = false;
+
+// Шарик
+let x = canvas.width / 2;
+let y = canvas.height - 30;
+let dx = 2;
+let dy = -2;
+
+// Блоки
+let bricks = [];
+for(let c = 0; c < brickColumnCount; c++) {
+    bricks[c] = [];
+    for(let r = 0; r < brickRowCount; r++) {
+        bricks[c][r] = { x: 0, y: 0, status: 1 };
+    }
+}
+
+// Массив частиц
+let particles = [];
+
+// Флаг для запуска салюта
+let fireworksActive = false;
+let fireworksTimer = 0;
+
+// Жизни
+let lives = 3;
+
+let startTime = Date.now();
+let gameOver = false;
+let finalTime = 0;
+let victoryTime = -1;
+let gameWon = false;
+
+function showGameOver() {
+    const gameoverDiv = document.getElementById('gameover');
+    if (!gameoverDiv) return;
+    gameoverDiv.innerHTML = `
+        <h1>Game Over</h1>
+        <div style='color:#fff;font-size:20px;margin-bottom:16px;'>Время: ${formatTime(finalTime)}</div>
+        <button onclick='playAgain()' style='margin-bottom: 10px;'>Играть снова</button>
+        <button onclick='returnToMenu()' style='font-size: 18px; padding: 10px 25px; border: 2px solid #fff; border-radius: 50px; background: #fff; color: #000; cursor: pointer; font-family: Arial, sans-serif; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; display: block; margin: 0 auto;'>В меню</button>
+    `;
+    gameoverDiv.style.display = 'flex';
+    
+    // Грустный звук Game Over
+    if (typeof audioManager !== 'undefined') {
+        audioManager.playGameOver();
+    }
+}
+
+function showVictory() {
+    const gameoverDiv = document.getElementById('gameover');
+    if (!gameoverDiv) return;
+    gameoverDiv.innerHTML = `
+        <h1 style='color:#4caf50;'>Вы Победили!</h1>
+        <div style='color:#fff;font-size:20px;margin-bottom:16px;'>Время: ${formatTime(victoryTime)}</div>
+        <button onclick='playAgain()' style='margin-bottom: 10px;'>Играть снова</button>
+        <button onclick='returnToMenu()' style='font-size: 18px; padding: 10px 25px; border: 2px solid #fff; border-radius: 50px; background: #fff; color: #000; cursor: pointer; font-family: Arial, sans-serif; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; display: block; margin: 0 auto;'>В меню</button>
+    `;
+    gameoverDiv.style.display = 'flex';
+}
+function formatTime(totalSeconds) {
+    let minutes = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function renderLives() {
+    const livesDiv = document.getElementById('lives');
+    if (!livesDiv) return;
+    livesDiv.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'heart' + (i >= lives ? ' lost' : '');
+        heart.innerHTML = `<svg viewBox="0 0 32 32"><path fill="red" d="M23.6,4.6c-2.1,0-4,1-5.6,2.7C16.4,5.6,14.5,4.6,12.4,4.6C8.1,4.6,4.6,8.1,4.6,12.4c0,7.2,10.2,13.2,11.1,13.7 c0.2,0.1,0.5,0.1,0.7,0c0.9-0.5,11.1-6.5,11.1-13.7C27.4,8.1,23.9,4.6,23.6,4.6z"/></svg>`;
+        livesDiv.appendChild(heart);
+    }
+}
+
+function renderTimer() {
+    const timerDiv = document.getElementById('timer');
+    if (!timerDiv) return;
+    let elapsed;
+    if (gameOver) {
+        elapsed = finalTime;
+    } else if ((gameWon || fireworksActive) && victoryTime >= 0) {
+        elapsed = victoryTime;
+    } else {
+        elapsed = Math.floor((Date.now() - startTime) / 1000);
+    }
+    let minutes = Math.floor(elapsed / 60);
+    let seconds = elapsed % 60;
+    timerDiv.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Функция генерации частиц для блока
+function createParticles(x, y, color) {
+    const count = 25;
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = 1 + Math.random() * 2;
+        particles.push({
+            x: x + brickWidth / 2,
+            y: y + brickHeight / 2,
+            dx: Math.cos(angle) * speed,
+            dy: Math.sin(angle) * speed,
+            life: 30 + Math.random() * 20,
+            color: color
+        });
+    }
+}
+
+// Функция запуска салюта
+function launchFireworks() {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const colors = ['#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#00bcd4', '#fff'];
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 40; j++) {
+            const angle = (Math.PI * 2 / 40) * j;
+            const speed = 2 + Math.random() * 2;
+            particles.push({
+                x: centerX,
+                y: centerY,
+                dx: Math.cos(angle) * speed * (0.7 + Math.random() * 0.6),
+                dy: Math.sin(angle) * speed * (0.7 + Math.random() * 0.6),
+                life: 50 + Math.random() * 30,
+                color: colors[i % colors.length]
+            });
+        }
+    }
+    fireworksActive = true;
+    fireworksTimer = 120; // длительность салюта
+    victoryTime = Math.floor((Date.now() - startTime) / 1000);
+    console.log('Победа! Время зафиксировано:', victoryTime);
+}
+
+// Цвета для строк блоков
+const brickColors = ['#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5'];
+
+// Управление
+function keyDownHandler(e) {
+    if(e.key === 'Right' || e.key === 'ArrowRight') {
+        rightPressed = true;
+    } else if(e.key === 'Left' || e.key === 'ArrowLeft') {
+        leftPressed = true;
+    }
+}
+function keyUpHandler(e) {
+    if(e.key === 'Right' || e.key === 'ArrowRight') {
+        rightPressed = false;
+    } else if(e.key === 'Left' || e.key === 'ArrowLeft') {
+        leftPressed = false;
+    }
+}
+document.addEventListener('keydown', keyDownHandler, false);
+document.addEventListener('keyup', keyUpHandler, false);
+
+// Отрисовка блоков
+function drawBricks() {
+    for(let c = 0; c < brickColumnCount; c++) {
+        for(let r = 0; r < brickRowCount; r++) {
+            if(bricks[c][r].status === 1) {
+                let brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                let brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                bricks[c][r].x = brickX;
+                bricks[c][r].y = brickY;
+                ctx.beginPath();
+                ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                ctx.fillStyle = brickColors[r % brickColors.length];
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+    }
+}
+
+// Отрисовка и обновление частиц
+function drawParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 2, 2);
+        p.x += p.dx;
+        p.y += p.dy;
+        p.dy += 0.08; // гравитация
+        p.life--;
+        if (p.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+// Отрисовка шарика
+function drawBall() {
+    ctx.beginPath();
+    ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+    ctx.fillStyle = '#ffeb3b';
+    ctx.fill();
+    ctx.closePath();
+}
+
+// Отрисовка платформы
+function drawPaddle() {
+    ctx.beginPath();
+    ctx.rect(paddleX, canvas.height - paddleHeight - 5, paddleWidth, paddleHeight);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.closePath();
+}
+
+// Проверка столкновений с блоками
+function collisionDetection() {
+    let allBricksDestroyed = true;
+    for(let c = 0; c < brickColumnCount; c++) {
+        for(let r = 0; r < brickRowCount; r++) {
+            let b = bricks[c][r];
+            if(b.status === 1) {
+                allBricksDestroyed = false;
+                if(x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                    dy = -dy;
+                    b.status = 0;
+                    createParticles(b.x, b.y, brickColors[r % brickColors.length]);
+                    // Звук разрушения блока
+                    if (typeof audioManager !== 'undefined') {
+                        audioManager.playBlockDestroy();
+                    }
+                }
+            }
+        }
+    }
+    // Если все блоки уничтожены и салют ещё не запущен
+    if(allBricksDestroyed && !fireworksActive) {
+        // Звук победы
+        if (typeof audioManager !== 'undefined') {
+            audioManager.playVictory();
+        }
+        launchFireworks();
+        // Аплодисменты во время салюта
+        setTimeout(() => {
+            if (typeof audioManager !== 'undefined') {
+                audioManager.playApplause();
+            }
+        }, 500); // Начинаем аплодисменты через 0.5 секунды после начала салюта
+    }
+}
+
+function resetBallAndPaddle() {
+    x = canvas.width / 2;
+    y = canvas.height - 30;
+    dx = 2 * (Math.random() > 0.5 ? 1 : -1);
+    dy = -2;
+    paddleX = (canvas.width - paddleWidth) / 2;
+}
+
+// Основной цикл игры
+function draw() {
+    if (gameOver) return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBricks();
+    drawParticles();
+    drawBall();
+    drawPaddle();
+    collisionDetection();
+    renderLives();
+    renderTimer();
+    
+    // Если салют активен, не перезапускать игру
+    if (fireworksActive) {
+        fireworksTimer--;
+        if (fireworksTimer <= 0 && particles.length === 0) {
+            fireworksActive = false;
+            gameWon = true; // Останавливаем игру после завершения салюта
+            // Останавливаем фоновую музыку
+            if (typeof audioManager !== 'undefined') {
+                audioManager.stopBackgroundMusic();
+            }
+            setTimeout(showVictory, 1000);
+            return; // Прерываем цикл
+        }
+    }
+    
+    if (!fireworksActive && !gameWon) {
+        // Движение шарика и платформы только если нет салюта и игра не выиграна
+        if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+            dx = -dx;
+            // Звук отскока шарика от стен
+            if (typeof audioManager !== 'undefined') {
+                audioManager.playBallBounce();
+            }
+        }
+        if(y + dy < ballRadius) {
+            dy = -dy;
+            // Звук отскока шарика от потолка
+            if (typeof audioManager !== 'undefined') {
+                audioManager.playBallBounce();
+            }
+        } else if(y + dy > canvas.height - ballRadius - paddleHeight - 5) {
+            if(x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+                // Звук отскока шарика от платформы
+                if (typeof audioManager !== 'undefined') {
+                    audioManager.playBallBounce();
+                }
+                            } else if(y + dy > canvas.height - ballRadius) {
+                    lives--;
+                    // Звук потери жизни
+                    if (typeof audioManager !== 'undefined') {
+                        audioManager.playLifeLost();
+                    }
+                    if (lives > 0) {
+                        resetBallAndPaddle();
+                    } else {
+                        finalTime = Math.floor((Date.now() - startTime) / 1000);
+                        gameOver = true;
+                        // Останавливаем фоновую музыку
+                        if (typeof audioManager !== 'undefined') {
+                            audioManager.stopBackgroundMusic();
+                        }
+                        renderTimer();
+                        setTimeout(showGameOver, 400);
+                        return; // Прерываем цикл
+                    }
+                }
+        }
+        x += dx;
+        y += dy;
+        if(rightPressed && paddleX < canvas.width - paddleWidth) {
+            paddleX += 5;
+        } else if(leftPressed && paddleX > 0) {
+            paddleX -= 5;
+        }
+    }
+    
+    requestAnimationFrame(draw);
+}
+
+// Функция инициализации игры
+function initGame() {
+    // Сброс всех переменных игры
+    lives = 3;
+    gameOver = false;
+    gameWon = false;
+    fireworksActive = false;
+    fireworksTimer = 0;
+    particles = [];
+    victoryTime = -1;
+    finalTime = 0;
+    startTime = Date.now();
+    
+    // Сброс позиций
+    resetBallAndPaddle();
+    
+    // Восстановление блоков
+    for(let c = 0; c < brickColumnCount; c++) {
+        for(let r = 0; r < brickRowCount; r++) {
+            bricks[c][r].status = 1;
+        }
+    }
+    
+    // Запуск игрового цикла
+    draw();
+}
+
+// Запускаем игру только если меню не активно
+if (document.getElementById('gameMenu').style.display === 'none') {
+    initGame();
+} 
