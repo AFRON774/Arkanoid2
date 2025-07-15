@@ -17,6 +17,7 @@ class GameMenu {
         this.backToMenuFromVictoryBtn = document.getElementById('backToMenuFromVictory');
         this.menuMusicWasPlaying = false; // Запоминаем состояние музыки меню
         this.selectedLevel = 1; // По умолчанию выбран уровень 1
+        this.closeLevelMapBtn = document.getElementById('closeLevelMap');
         
         // Скины
         this.selectedPaddleSkin = 'classic';
@@ -26,6 +27,11 @@ class GameMenu {
             ball: ['classic']
         };
         
+        // Проверка наличия всех важных элементов
+        if (!this.menuElement || !this.gameArea || !this.levelMap || !this.skinsWindow || !this.playButton || !this.skinsButton || !this.menuMusicBtn) {
+            console.error('Ошибка инициализации GameMenu: отсутствует один из важных элементов меню!');
+            return;
+        }
         this.init();
     }
 
@@ -34,42 +40,58 @@ class GameMenu {
         this.showMenu();
         
         // Добавляем обработчик для кнопки "Играть"
-        this.playButton.addEventListener('click', () => {
-            this.showLevelMap();
-        });
+        if (this.playButton) {
+            this.playButton.addEventListener('click', () => {
+                this.showLevelMap();
+            });
+        }
 
         // Добавляем обработчик для кнопки "Скины"
-        this.skinsButton.addEventListener('click', () => {
-            this.showSkinsWindow();
-        });
+        if (this.skinsButton) {
+            this.skinsButton.addEventListener('click', () => {
+                this.showSkinsWindow();
+            });
+        }
 
         // Добавляем обработчик для кнопки "Назад в меню" (на карте уровней)
-        this.backToMenuBtn.addEventListener('click', () => {
-            this.showMenu();
-            this.levelMap.style.display = 'none'; // Явно скрываем карту уровней
-        });
+        if (this.backToMenuBtn) {
+            this.backToMenuBtn.addEventListener('click', () => {
+                this.showMenu();
+                this.levelMap.style.display = 'none'; // Явно скрываем карту уровней
+            });
+        }
 
         // Добавляем обработчики для окна скинов
-        this.closeSkinsBtn.addEventListener('click', () => {
-            this.showMenu();
-        });
+        if (this.closeSkinsBtn) {
+            this.closeSkinsBtn.addEventListener('click', () => {
+                this.showMenu();
+            });
+        }
 
-        this.backToMenuFromSkinsBtn.addEventListener('click', () => {
-            this.showMenu();
-        });
+        if (this.backToMenuFromSkinsBtn) {
+            this.backToMenuFromSkinsBtn.addEventListener('click', () => {
+                this.showMenu();
+            });
+        }
 
         // Добавляем обработчики для окна победы
-        this.nextLevelBtn.addEventListener('click', () => {
-            this.nextLevel();
-        });
+        if (this.nextLevelBtn) {
+            this.nextLevelBtn.addEventListener('click', () => {
+                this.nextLevel();
+            });
+        }
 
-        this.replayLevelBtn.addEventListener('click', () => {
-            this.replayLevel();
-        });
+        if (this.replayLevelBtn) {
+            this.replayLevelBtn.addEventListener('click', () => {
+                this.replayLevel();
+            });
+        }
 
-        this.backToMenuFromVictoryBtn.addEventListener('click', () => {
-            this.showMenu();
-        });
+        if (this.backToMenuFromVictoryBtn) {
+            this.backToMenuFromVictoryBtn.addEventListener('click', () => {
+                this.showMenu();
+            });
+        }
 
         // Добавляем обработчики для уровней на карте
         this.addLevelMapHandlers();
@@ -78,9 +100,11 @@ class GameMenu {
         this.addSkinsHandlers();
 
         // Добавляем обработчик для кнопки музыки в меню
-        this.menuMusicBtn.addEventListener('click', () => {
-            this.toggleMenuMusic();
-        });
+        if (this.menuMusicBtn) {
+            this.menuMusicBtn.addEventListener('click', () => {
+                this.toggleMenuMusic();
+            });
+        }
 
         // Добавляем обработчик для клавиши Enter
         document.addEventListener('keydown', (e) => {
@@ -88,6 +112,13 @@ class GameMenu {
                 this.showLevelMap();
             }
         });
+
+        // Кнопка закрытия карты уровней (крестик)
+        if (this.closeLevelMapBtn) {
+            this.closeLevelMapBtn.addEventListener('click', () => {
+                this.showMenu();
+            });
+        }
     }
 
     showMenu() {
