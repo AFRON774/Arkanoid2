@@ -43,9 +43,10 @@ class GameMenu {
             this.showSkinsWindow();
         });
 
-        // Добавляем обработчик для кнопки "Назад в меню"
+        // Добавляем обработчик для кнопки "Назад в меню" (на карте уровней)
         this.backToMenuBtn.addEventListener('click', () => {
             this.showMenu();
+            this.levelMap.style.display = 'none'; // Явно скрываем карту уровней
         });
 
         // Добавляем обработчики для окна скинов
@@ -92,7 +93,7 @@ class GameMenu {
     showMenu() {
         this.menuElement.style.display = 'flex';
         this.gameArea.style.display = 'none';
-        this.levelMap.style.display = 'none';
+        this.levelMap.style.display = 'none'; // Явно скрываем карту уровней
         this.skinsWindow.style.display = 'none';
         this.victoryWindow.style.display = 'none';
         
@@ -334,6 +335,7 @@ class GameMenu {
         }
         
         this.hideMenu();
+        this.levelMap.style.display = 'none'; // Явно скрываем карту уровней при старте игры
         
         // Останавливаем меню музыку и запускаем игровую музыку
         if (typeof audioManager !== 'undefined') {
