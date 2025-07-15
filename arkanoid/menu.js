@@ -379,7 +379,10 @@ class GameMenu {
 }
 
 // Создаем глобальный экземпляр меню
-const gameMenu = new GameMenu();
+let gameMenu;
+document.addEventListener('DOMContentLoaded', () => {
+    gameMenu = new GameMenu();
+});
 
 // Функция для возврата в меню из игры
 function returnToMenu() {
