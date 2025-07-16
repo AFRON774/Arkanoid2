@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Башенная защита</title>
+    <link rel="stylesheet" href="../arkanoid/style.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #18181b 0%, #6366f1 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .tower-menu {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 32px;
+            box-shadow: 0 8px 40px #0008;
+            padding: 48px 32px 40px 32px;
+            min-width: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        .tower-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #06b6d4;
+            margin-bottom: 32px;
+            text-shadow: 0 2px 16px #0006;
+        }
+        .play-button {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 16px 48px;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 2px 16px #6366f155;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .play-button:hover {
+            transform: scale(1.07);
+            box-shadow: 0 4px 32px #8b5cf655;
+        }
+        .tower-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #6366f1 60%, #06b6d4 100%);
+            border-radius: 24px 24px 12px 12px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 24px #06b6d455;
+        }
+        .tower-icon::after {
+            content: '';
+            display: block;
+            width: 32px;
+            height: 16px;
+            background: #fff;
+            border-radius: 0 0 16px 16px;
+            position: absolute;
+            left: 50%;
+            bottom: -8px;
+            transform: translateX(-50%);
+            opacity: 0.7;
+        }
+        .arrow {
+            position: absolute;
+            left: 50%;
+            top: 18px;
+            transform: translateX(-50%) rotate(-10deg);
+            width: 44px;
+            height: 8px;
+            background: linear-gradient(90deg, #fbbf24 60%, #fff 100%);
+            border-radius: 4px;
+            box-shadow: 0 2px 8px #fbbf2444;
+        }
+        .arrow-head {
+            position: absolute;
+            right: -8px;
+            top: -4px;
+            width: 12px;
+            height: 16px;
+            background: #fff;
+            clip-path: polygon(0 0, 100% 50%, 0 100%);
+        }
+        /* --- Game Window --- */
+        #game-window {
+            position: fixed;
+            left: 0; top: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #18181b 0%, #6366f1 100%);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .game-canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            background: transparent;
+        }
+        /* Плюсики */
+        .build-spot {
+            position: absolute;
+            width: 56px;
+            height: 56px;
+            border: 2px dashed #fff;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.07);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: box-shadow 0.2s;
+        }
+        .build-spot:hover {
+            box-shadow: 0 0 16px #06b6d4aa;
+        }
+        .plus {
+            font-size: 2.2rem;
+            color: #fff;
+            user-select: none;
+        }
+        /* Меню выбора башни */
+        .tower-menu-popup {
+            position: absolute;
+            left: 50%;
+            top: -90px;
+            transform: translateX(-50%);
+            background: #23263a;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px #0008;
+            padding: 12px 18px;
+            min-width: 180px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: popupAppear 0.2s;
+        }
+        @keyframes popupAppear {
+            from { opacity: 0; transform: translateX(-50%) scale(0.8); }
+            to { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+        .tower-choice {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #2d314d;
+            border-radius: 10px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .tower-choice:hover {
+            background: #3b4070;
+        }
+        .tower-icon-choice {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .tower-label {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .tower-cost {
+            color: #fbbf24;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="tower-menu" id="main-menu">
+        <div class="tower-icon">
+            <div class="arrow">
+                <div class="arrow-head"></div>
+            </div>
+        </div>
+        <div class="tower-title">Башенная защита</div>
+        <button class="play-button" id="play-btn">Играть</button>
+    </div>
+    <div id="coins-ui" style="position:fixed;left:32px;top:24px;z-index:200;display:none;align-items:center;font-size:1.6rem;font-weight:600;color:#fbbf24;text-shadow:0 2px 8px #000a;user-select:none;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:2.2rem;height:2.2rem;margin-right:8px;">
+            <svg width="2rem" height="2rem" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="18" fill="#fbbf24" stroke="#fff" stroke-width="3"/>
+                <ellipse cx="20" cy="20" rx="10" ry="10" fill="#fde68a"/>
+                <text x="20" y="26" text-anchor="middle" font-size="16" font-family="Arial" fill="#b45309" font-weight="bold">₿</text>
+            </svg>
+        </span>
+        <span id="coins-count">50</span>
+    </div>
+    <div id="game-window">
+        <canvas id="game-canvas" class="game-canvas"></canvas>
+        <!-- build spots and popups will be rendered by JS -->
+    </div>
+    <!-- Кнопка волны и окно поражения -->
+    <div id="wave-ui" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:210;display:none;align-items:center;gap:16px;">
+        <button id="wave-btn" style="background:#dc2626;color:#fff;font-size:1.4rem;font-weight:700;padding:16px 40px;border:none;border-radius:16px;box-shadow:0 2px 16px #dc262655;cursor:pointer;">Волна</button>
+        <span id="wave-num" style="font-size:1.3rem;font-weight:600;color:#fff;text-shadow:0 2px 8px #000a;">1</span>
+    </div>
+    <div id="lose-window" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:300;background:rgba(30,30,40,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="background:#fff3;padding:40px 32px 32px 32px;border-radius:32px;box-shadow:0 8px 40px #0008;text-align:center;">
+            <h2 style="color:#dc2626;font-size:2.5rem;font-weight:800;margin-bottom:24px;">Вы проиграли!</h2>
+            <div style="display:flex;gap:24px;justify-content:center;">
+                <button id="restart-btn" style="background:#6366f1;color:#fff;font-size:1.2rem;font-weight:700;padding:12px 32px;border:none;border-radius:12px;cursor:pointer;">Начать сначала</button>
+                <button id="menu-btn" style="background:#334155;color:#fff;font-size:1.2rem;font-weight:700;padding:12px 32px;border:none;border-radius:12px;cursor:pointer;">В меню</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    // --- Переключение окон ---
+    const playBtn = document.getElementById('play-btn');
+    const mainMenu = document.getElementById('main-menu');
+    const gameWindow = document.getElementById('game-window');
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    // --- Глобальные переменные и константы ---
+    let coins = 50;
+    let towers = [];
+    let enemies = [];
+    let wave = 1;
+    let waveInProgress = false;
+    let gameOver = false;
+    const TOWER_COSTS = { archer: 25, mage: 50 };
+    const TOWER_RADIUS = { archer: 180, mage: 160 };
+    const TOWER_DAMAGE = { archer: 2, mage: 1 };
+    const TOWER_CHAIN = { archer: 1, mage: 3 };
+    // --- pathPoints и buildSpots ---
+    let pathPoints = [];
+    let buildSpots = [];
+    function getPointOnPath(t) {
+        let total = 0;
+        let segLens = [];
+        for (let i = 1; i < pathPoints.length; i++) {
+            let dx = pathPoints[i].x - pathPoints[i-1].x;
+            let dy = pathPoints[i].y - pathPoints[i-1].y;
+            let len = Math.sqrt(dx*dx + dy*dy);
+            segLens.push(len);
+            total += len;
+        }
+        let dist = t * total;
+        let acc = 0;
+        for (let i = 1; i < pathPoints.length; i++) {
+            if (acc + segLens[i-1] >= dist) {
+                let ratio = (dist - acc) / segLens[i-1];
+                return {
+                    x: pathPoints[i-1].x + (pathPoints[i].x - pathPoints[i-1].x) * ratio,
+                    y: pathPoints[i-1].y + (pathPoints[i].y - pathPoints[i-1].y) * ratio
+                };
+            }
+            acc += segLens[i-1];
+        }
+        return pathPoints[pathPoints.length-1];
+    }
+    function updatePathAndSpots() {
+        pathPoints = [
+            {x: 120, y: canvas.height-120},
+            {x: 220, y: canvas.height-220},
+            {x: canvas.width/2-60, y: canvas.height/2+80},
+            {x: canvas.width/2+60, y: canvas.height/2-80},
+            {x: canvas.width-220, y: 220},
+            {x: canvas.width-120, y: 120}
+        ];
+        buildSpots = Array.from({length: 5}, (_, i) => getPointOnPath((i+1)/(5+1)));
+    }
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        updatePathAndSpots();
+        drawGameScene();
+        renderBuildSpots();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    // --- Рисуем сцену ---
+    function drawGameScene() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        // Тропинка
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 48;
+        ctx.lineCap = 'round';
+        ctx.setLineDash([32, 24]);
+        ctx.beginPath();
+        ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+        for(let i=1;i<pathPoints.length;i++) ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.lineWidth = 12;
+        ctx.strokeStyle = '#fff8';
+        ctx.beginPath();
+        ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+        for(let i=1;i<pathPoints.length;i++) ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
+        ctx.stroke();
+        ctx.restore();
+        // Пещера-череп
+        drawCave(pathPoints[0].x, pathPoints[0].y);
+        // Замок
+        drawCastle(pathPoints[pathPoints.length-1].x, pathPoints[pathPoints.length-1].y);
+        // Башни
+        towers.forEach(drawTower);
+    }
+    function drawCave(x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        ctx.arc(0, 0, 48, Math.PI*0.2, Math.PI*1.8, false);
+        ctx.lineTo(-40, 40);
+        ctx.lineTo(40, 40);
+        ctx.closePath();
+        ctx.fillStyle = '#222';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.fill(); ctx.stroke();
+        // Глаза
+        ctx.beginPath(); ctx.arc(-18, -10, 7, 0, 2*Math.PI); ctx.arc(18, -10, 7, 0, 2*Math.PI);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.beginPath(); ctx.arc(-18, -10, 3, 0, 2*Math.PI); ctx.arc(18, -10, 3, 0, 2*Math.PI);
+        ctx.fillStyle = '#18181b'; ctx.fill();
+        ctx.restore();
+    }
+    function drawCastle(x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = '#6366f1';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(-32, 32); ctx.lineTo(-32, -32); ctx.lineTo(32, -32); ctx.lineTo(32, 32); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // Башенки
+        for(let i=-24;i<=24;i+=24){ ctx.beginPath(); ctx.rect(i-6,-44,12,12); ctx.fillStyle='#8b5cf6'; ctx.fill(); ctx.stroke(); }
+        // Дверь
+        ctx.beginPath(); ctx.arc(0, 24, 10, 0, Math.PI, true); ctx.fillStyle='#fff'; ctx.fill(); ctx.stroke();
+        ctx.restore();
+    }
+    // --- build spots ---
+    function renderBuildSpots() {
+        // Удаляем старые
+        document.querySelectorAll('.build-spot, .tower-menu-popup').forEach(e=>e.remove());
+        buildSpots.forEach((spot, i) => {
+            if (towers.find(t => t.idx === i)) return; // если уже построена башня
+            const div = document.createElement('div');
+            div.className = 'build-spot';
+            div.style.left = (spot.x-28)+'px';
+            div.style.top = (spot.y-28)+'px';
+            div.innerHTML = '<span class="plus">+</span>';
+            div.onclick = (e) => {
+                e.stopPropagation();
+                showTowerMenu(div, spot, i);
+            };
+            gameWindow.appendChild(div);
+        });
+    }
+    function showTowerMenu(parent, spot, idx) {
+        document.querySelectorAll('.tower-menu-popup').forEach(e=>e.remove());
+        const menu = document.createElement('div');
+        menu.className = 'tower-menu-popup';
+        menu.innerHTML = `
+            <div class="tower-choice" data-type="archer">
+                <div class="tower-icon-choice">🏹</div>
+                <div class="tower-label">Башня лучника</div>
+                <div class="tower-cost">25🪙</div>
+            </div>
+            <div class="tower-choice" data-type="mage">
+                <div class="tower-icon-choice">🔮</div>
+                <div class="tower-label">Башня мага</div>
+                <div class="tower-cost">50🪙</div>
+            </div>
+        `;
+        menu.onclick = e => e.stopPropagation();
+        menu.querySelectorAll('.tower-choice').forEach(choice => {
+            choice.onclick = (e) => {
+                e.stopPropagation();
+                const type = choice.getAttribute('data-type');
+                const cost = TOWER_COSTS[type];
+                if (coins < cost) {
+                    choice.style.background = '#a00';
+                    setTimeout(()=>choice.style.background='', 400);
+                    return;
+                }
+                setCoins(coins - cost);
+                towers.push({type, x: spot.x, y: spot.y, idx, cooldown: 0});
+                document.querySelectorAll('.tower-menu-popup').forEach(e=>e.remove());
+                renderBuildSpots();
+            };
+        });
+        parent.appendChild(menu);
+        // Закрытие по клику вне меню
+        setTimeout(()=>{
+            window.addEventListener('click', closeMenu, {once:true});
+       });
+        function closeMenu(){
+            menu.remove();
+        }
+    }
+    // --- Рисуем башню ---
+    function drawTower(tower) {
+        ctx.save();
+        ctx.translate(tower.x, tower.y);
+        // Основание
+        ctx.beginPath();
+        ctx.arc(0, 0, 22, 0, 2*Math.PI);
+        ctx.fillStyle = tower.type==='archer' ? '#4ade80' : '#818cf8';
+        ctx.shadowColor = tower.type==='archer' ? '#22d3ee' : '#a5b4fc';
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Верхушка
+        if (tower.type==='archer') {
+            ctx.beginPath(); ctx.moveTo(-8,-8); ctx.lineTo(0,-28); ctx.lineTo(8,-8); ctx.closePath(); ctx.fillStyle='#fff'; ctx.fill();
+            ctx.font = '20px Arial'; ctx.fillStyle = '#222'; ctx.fillText('🏹', -12, 10);
+        } else {
+            ctx.beginPath(); ctx.arc(0,-16,10,0,2*Math.PI); ctx.fillStyle='#fbbf24'; ctx.fill();
+            ctx.font = '20px Arial'; ctx.fillStyle = '#222'; ctx.fillText('🔮', -12, 10);
+        }
+        ctx.restore();
+    }
+    // --- Враги и волны ---
+    function spawnWave(n) {
+        let left = n;
+        waveInProgress = true;
+        function spawnPack() {
+            if (!waveInProgress) return;
+            let pack = Math.min(left, Math.floor(Math.random()*3)+1);
+            for (let i=0;i<pack;i++) {
+                enemies.push({
+                    x: pathPoints[0].x,
+                    y: pathPoints[0].y,
+                    t: 0.0,
+                    speed: 0.001 + Math.random()*0.0005,
+                    hp: 1,
+                    alive: true
+                });
+            }
+            console.log('Враги добавлены, всего:', enemies.length);
+            left -= pack;
+            if (left > 0) setTimeout(spawnPack, 500+Math.random()*400);
+        }
+        spawnPack();
+    }
+    function resetGame() {
+        setCoins(50);
+        towers = [];
+        enemies = [];
+        wave = 1;
+        waveInProgress = false;
+        gameOver = false;
+        window.waveEnemyCount = undefined;
+        document.getElementById('wave-num').textContent = wave;
+        // Явно скрываю окно поражения при любом рестарте
+        document.getElementById('lose-window').style.display = 'none';
+        document.getElementById('wave-ui').style.display = 'flex';
+        resizeCanvas();
+        // Явно скрываю lose-window и wave-ui, чтобы не перекрывали canvas
+        setTimeout(()=>{
+            document.getElementById('lose-window').style.display = 'none';
+            document.getElementById('wave-ui').style.display = 'flex';
+        }, 100);
+    }
+    // --- Анимация и стрельба ---
+    function gameLoop() {
+        drawGameScene();
+        // Для отладки
+        //console.log('Врагов на поле:', enemies.length);
+        // Враги
+        // Если нет врагов — endGame не вызываем
+        if (enemies.length > 0) {
+            enemies.forEach(enemy => {
+                if (!enemy.alive) return;
+                enemy.t += enemy.speed;
+                if (enemy.alive && enemy.t > 1 && !gameOver) {
+                    enemy.t = 1;
+                    enemy.alive = false;
+                    // Проигрыш
+                    endGame();
+                }
+                const pos = getPointOnPath(enemy.t);
+                enemy.x = pos.x;
+                enemy.y = pos.y;
+            });
+        }
+        // Рисуем врагов (зелёные точки)
+        enemies.forEach(enemy => {
+            if (!enemy.alive) return;
+            ctx.save();
+            ctx.translate(enemy.x, enemy.y);
+            ctx.beginPath();
+            ctx.arc(0, 0, 13, 0, 2*Math.PI);
+            ctx.fillStyle = '#22c55e';
+            ctx.shadowColor = '#16a34a';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        });
+        // Стрельба башен
+        towers.forEach(tower => {
+            tower.cooldown = (tower.cooldown||0) - 1;
+            // Найти врагов в радиусе
+            let inRange = enemies.filter(e => e.alive && Math.hypot(e.x-tower.x, e.y-tower.y) < TOWER_RADIUS[tower.type] && e.hp > 0);
+            if (inRange.length && tower.cooldown<=0 && !gameOver) {
+                if (tower.type==='archer') {
+                    // По одному врагу
+                    shootArrow(tower, inRange[0]);
+                    inRange[0].hp -= TOWER_DAMAGE.archer;
+                    if (inRange[0].hp <= 0) { inRange[0].alive = false; setCoins(coins+1); }
+                } else {
+                    // По цепочке до 3 врагов
+                    let chain = inRange.slice(0, TOWER_CHAIN.mage);
+                    chain.forEach(e=>{
+                        shootLightning(tower, e);
+                        e.hp -= TOWER_DAMAGE.mage;
+                        if (e.hp <= 0) { e.alive = false; setCoins(coins+1); }
+                    });
+                }
+                tower.cooldown = 60; // задержка между выстрелами
+            }
+        });
+        // Удаляем убитых врагов
+        enemies = enemies.filter(e=>e.alive);
+        // Если все враги уничтожены и волна была в процессе — сбрасываем waveInProgress
+        if (waveInProgress && enemies.length === 0 && !gameOver) {
+            waveInProgress = false;
+        }
+        if (!gameOver) requestAnimationFrame(gameLoop);
+    }
+    function endGame() {
+        if (gameOver) return;
+        // Окно поражения открываем только если окно игры активно
+        if (gameWindow.style.display !== 'flex') return;
+        gameOver = true;
+        waveInProgress = false;
+        document.getElementById('lose-window').style.display = 'flex';
+        document.getElementById('wave-ui').style.display = 'none';
+        // enemies = []; // не очищаем, чтобы башни могли добить оставшихся
+    }
+    // --- Функция для обновления количества монет ---
+    function setCoins(val) {
+        coins = val;
+        document.getElementById('coins-count').textContent = coins;
+    }
+    // --- Анимация стрелы и молнии ---
+    function shootArrow(tower, enemy) {
+        ctx.save();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(tower.x, tower.y-10);
+        ctx.lineTo(enemy.x, enemy.y);
+        ctx.stroke();
+        ctx.restore();
+    }
+    function shootLightning(tower, enemy) {
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(tower.x, tower.y-10);
+        ctx.lineTo(enemy.x, enemy.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+    // --- Запуск теста ---
+    playBtn.onclick = () => {
+        mainMenu.style.display = 'none';
+        gameWindow.style.display = 'flex';
+        document.getElementById('coins-ui').style.display = 'flex';
+        document.getElementById('wave-ui').style.display = 'flex';
+        // Явно скрываю окно поражения при любом старте
+        document.getElementById('lose-window').style.display = 'none';
+        resetGame();
+        gameLoop();
+    };
+    document.getElementById('wave-btn').onclick = () => {
+        wave++;
+        document.getElementById('wave-num').textContent = wave;
+        if (!waveInProgress) {
+            if (typeof window.waveEnemyCount === 'undefined') {
+                window.waveEnemyCount = 10;
+            } else {
+                let add = Math.floor(Math.random()*5)+1;
+                window.waveEnemyCount = window.waveEnemyCount + add;
+            }
+            spawnWave(window.waveEnemyCount);
+        }
+    };
+    document.getElementById('restart-btn').onclick = () => {
+        resetGame();
+        gameLoop();
+    };
+    document.getElementById('menu-btn').onclick = () => {
+        document.getElementById('lose-window').style.display = 'none';
+        gameWindow.style.display = 'none';
+        mainMenu.style.display = 'flex';
+        document.getElementById('coins-ui').style.display = 'none';
+        document.getElementById('wave-ui').style.display = 'none';
+    };
+    </script>
+</body>
+</html> 
