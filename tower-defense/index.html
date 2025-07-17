@@ -224,15 +224,7 @@
         <button id="wave-btn" style="background:#dc2626;color:#fff;font-size:1.4rem;font-weight:700;padding:16px 40px;border:none;border-radius:16px;box-shadow:0 2px 16px #dc262655;cursor:pointer;">Волна</button>
         <span id="wave-num" style="font-size:1.3rem;font-weight:600;color:#fff;text-shadow:0 2px 8px #000a;">1</span>
     </div>
-    <div id="lose-window" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:300;background:rgba(30,30,40,0.92);display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div style="background:#fff3;padding:40px 32px 32px 32px;border-radius:32px;box-shadow:0 8px 40px #0008;text-align:center;">
-            <h2 style="color:#dc2626;font-size:2.5rem;font-weight:800;margin-bottom:24px;">Вы проиграли!</h2>
-            <div style="display:flex;gap:24px;justify-content:center;">
-                <button id="restart-btn" style="background:#6366f1;color:#fff;font-size:1.2rem;font-weight:700;padding:12px 32px;border:none;border-radius:12px;cursor:pointer;">Начать сначала</button>
-                <button id="menu-btn" style="background:#334155;color:#fff;font-size:1.2rem;font-weight:700;padding:12px 32px;border:none;border-radius:12px;cursor:pointer;">В меню</button>
-            </div>
-        </div>
-    </div>
+    <div id="defeat-actions" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:220;gap:24px;display:flex;"></div>
     <script>
     // --- Переключение окон ---
     const playBtn = document.getElementById('play-btn');
@@ -419,22 +411,25 @@
         }
     }
     // --- Рисуем башню ---
+    const archerTowerImg = new Image();
+    archerTowerImg.src = 'spryts/arrow_tower.png';
     function drawTower(tower) {
         ctx.save();
         ctx.translate(tower.x, tower.y);
-        // Основание
-        ctx.beginPath();
-        ctx.arc(0, 0, 22, 0, 2*Math.PI);
-        ctx.fillStyle = tower.type==='archer' ? '#4ade80' : '#818cf8';
-        ctx.shadowColor = tower.type==='archer' ? '#22d3ee' : '#a5b4fc';
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        // Верхушка
         if (tower.type==='archer') {
-            ctx.beginPath(); ctx.moveTo(-8,-8); ctx.lineTo(0,-28); ctx.lineTo(8,-8); ctx.closePath(); ctx.fillStyle='#fff'; ctx.fill();
-            ctx.font = '20px Arial'; ctx.fillStyle = '#222'; ctx.fillText('🏹', -12, 10);
+            if (archerTowerImg.complete) {
+                ctx.drawImage(archerTowerImg, -24, -32, 48, 48);
+            }
         } else {
+            // Основание
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, 0, 2*Math.PI);
+            ctx.fillStyle = '#818cf8';
+            ctx.shadowColor = '#a5b4fc';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Верхушка
             ctx.beginPath(); ctx.arc(0,-16,10,0,2*Math.PI); ctx.fillStyle='#fbbf24'; ctx.fill();
             ctx.font = '20px Arial'; ctx.fillStyle = '#222'; ctx.fillText('🔮', -12, 10);
         }
@@ -472,14 +467,12 @@
         gameOver = false;
         window.waveEnemyCount = undefined;
         document.getElementById('wave-num').textContent = wave;
-        // Явно скрываю окно поражения при любом рестарте
-        document.getElementById('lose-window').style.display = 'none';
         document.getElementById('wave-ui').style.display = 'flex';
+        document.getElementById('defeat-actions').style.display = 'none';
         resizeCanvas();
-        // Явно скрываю lose-window и wave-ui, чтобы не перекрывали canvas
         setTimeout(()=>{
-            document.getElementById('lose-window').style.display = 'none';
             document.getElementById('wave-ui').style.display = 'flex';
+            document.getElementById('defeat-actions').style.display = 'none';
         }, 100);
     }
     // --- Анимация и стрельба ---
@@ -551,13 +544,29 @@
     }
     function endGame() {
         if (gameOver) return;
-        // Окно поражения открываем только если окно игры активно
         if (gameWindow.style.display !== 'flex') return;
         gameOver = true;
         waveInProgress = false;
-        document.getElementById('lose-window').style.display = 'flex';
         document.getElementById('wave-ui').style.display = 'none';
-        // enemies = []; // не очищаем, чтобы башни могли добить оставшихся
+        // Показываем defeat-actions
+        const defeatActions = document.getElementById('defeat-actions');
+        defeatActions.innerHTML = `
+            <button id="defeat-restart" style="background:#6366f1;color:#fff;font-size:1.2rem;font-weight:700;padding:12px 32px;border:none;border-radius:12px;cursor:pointer;">Играть снова</button>
+            <button id="defeat-menu" style="background:#334155;color:#fff;font-size:1.2rem;font-weight:700;padding:12px 32px;border:none;border-radius:12px;cursor:pointer;">В меню</button>
+        `;
+        defeatActions.style.display = 'flex';
+        document.getElementById('defeat-restart').onclick = () => {
+            defeatActions.style.display = 'none';
+            resetGame();
+            gameLoop();
+        };
+        document.getElementById('defeat-menu').onclick = () => {
+            defeatActions.style.display = 'none';
+            gameWindow.style.display = 'none';
+            mainMenu.style.display = 'flex';
+            document.getElementById('coins-ui').style.display = 'none';
+            document.getElementById('wave-ui').style.display = 'none';
+        };
     }
     // --- Функция для обновления количества монет ---
     function setCoins(val) {
@@ -593,8 +602,7 @@
         gameWindow.style.display = 'flex';
         document.getElementById('coins-ui').style.display = 'flex';
         document.getElementById('wave-ui').style.display = 'flex';
-        // Явно скрываю окно поражения при любом старте
-        document.getElementById('lose-window').style.display = 'none';
+        document.getElementById('defeat-actions').style.display = 'none';
         resetGame();
         gameLoop();
     };
@@ -610,17 +618,6 @@
             }
             spawnWave(window.waveEnemyCount);
         }
-    };
-    document.getElementById('restart-btn').onclick = () => {
-        resetGame();
-        gameLoop();
-    };
-    document.getElementById('menu-btn').onclick = () => {
-        document.getElementById('lose-window').style.display = 'none';
-        gameWindow.style.display = 'none';
-        mainMenu.style.display = 'flex';
-        document.getElementById('coins-ui').style.display = 'none';
-        document.getElementById('wave-ui').style.display = 'none';
     };
     </script>
 </body>
