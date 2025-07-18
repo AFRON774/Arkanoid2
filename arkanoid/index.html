@@ -100,34 +100,57 @@
             </div>
             
             <!-- Выбор скинов -->
-            <div class="skin-selection">
-                <div class="skin-category">
-                    <h3>Доска</h3>
-                    <div class="skin-grid">
-                        <div class="skin-item active" data-type="paddle" data-skin="classic">
-                            <div class="skin-paddle classic-paddle"></div>
-                            <span>Классическая</span>
-                        </div>
+            <div class="skin-category">
+                <h3>Доска</h3>
+                <div class="skin-grid">
+                    <div class="skin-item active" data-type="paddle" data-skin="classic">
+                        <div class="skin-paddle classic-paddle"></div>
+                        <span>Классическая</span>
+                    </div>
+                    <div class="skin-item" data-type="paddle" data-skin="green">
+                        <div class="skin-paddle green-paddle"></div>
+                        <span>Зелёная</span>
+                    </div>
+                    <div class="skin-item" data-type="paddle" data-skin="red">
+                        <div class="skin-paddle red-paddle"></div>
+                        <span>Красная</span>
+                    </div>
+                    <div class="skin-item" data-type="paddle" data-skin="blue">
+                        <div class="skin-paddle blue-paddle"></div>
+                        <span>Синяя</span>
                     </div>
                 </div>
-                
-                <div class="skin-category">
-                    <h3>Шар</h3>
-                    <div class="skin-grid">
-                        <div class="skin-item active" data-type="ball" data-skin="classic">
-                            <div class="skin-ball classic-ball"></div>
-                            <span>Классический</span>
-                        </div>
-                        <div class="skin-item locked" data-type="ball" data-skin="smiley" data-requirement="level2">
-                            <div class="skin-ball smiley-ball"></div>
-                            <span>Улыбка</span>
-                            <div class="lock-icon">🔒</div>
-                        </div>
+            </div>
+            
+            <div class="skin-category">
+                <h3>Шар</h3>
+                <div class="skin-grid">
+                    <div class="skin-item active" data-type="ball" data-skin="classic">
+                        <div class="skin-ball classic-ball"></div>
+                        <span>Классический</span>
                     </div>
                 </div>
             </div>
             
             <button id="backToMenuFromSkins" class="back-button">← Назад в меню</button>
+        </div>
+    </div>
+    
+    <!-- Окно получения скина -->
+    <div id="skinRewardWindow" class="skin-reward-window" style="display:none;">
+        <div class="skin-reward-container">
+            <h2 class="skin-reward-title">Получен скин: <span style='color:#ffeb3b;'>Улыбка</span>!</h2>
+            <div class="skin-reward-image">
+                <div class="skin-ball smiley-ball no-face" style="width:48px;height:48px;position:relative;overflow:hidden;margin:0 auto;">
+                    <div class="smile-eyes" style="position:absolute;top:13px;left:10px;width:28px;height:10px;display:flex;justify-content:space-between;">
+                        <div style="width:6px;height:6px;background:#000;border-radius:50%;"></div>
+                        <div style="width:6px;height:6px;background:#000;border-radius:50%;"></div>
+                    </div>
+                    <div class="smile-mouth" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:18px;height:8px;border:2px solid #000;border-top:none;border-radius:0 0 12px 12px;"></div>
+                </div>
+            </div>
+            <div class="skin-reward-label">Теперь вы можете выбрать скин "Улыбка" для мяча!</div>
+            <button id="skinRewardOkBtn" class="skin-reward-ok">ОК</button>
         </div>
     </div>
     

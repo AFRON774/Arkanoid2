@@ -363,20 +363,76 @@ function drawParticles() {
 
 // Отрисовка шарика
 function drawBall() {
-    ctx.beginPath();
-    ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-    ctx.fillStyle = '#ffeb3b';
-    ctx.fill();
-    ctx.closePath();
+    ctx.save();
+    let skin = 'classic';
+    if (typeof gameMenu !== 'undefined' && gameMenu.selectedBallSkin) {
+        skin = gameMenu.selectedBallSkin;
+    }
+    if (skin === 'smiley') {
+        // Жёлтый круг
+        ctx.beginPath();
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fill();
+        ctx.closePath();
+        // Глаза
+        ctx.beginPath();
+        ctx.arc(x-4, y-3, 1.2, 0, Math.PI*2);
+        ctx.arc(x+4, y-3, 1.2, 0, Math.PI*2);
+        ctx.fillStyle = '#222';
+        ctx.fill();
+        ctx.closePath();
+        // Улыбка
+        ctx.beginPath();
+        ctx.arc(x, y+1, 4, 0.15*Math.PI, 0.85*Math.PI);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#222';
+        ctx.stroke();
+        ctx.closePath();
+    } else {
+        // Классический шар
+        ctx.beginPath();
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fill();
+        ctx.closePath();
+    }
+    ctx.restore();
 }
 
 // Отрисовка платформы
 function drawPaddle() {
+    ctx.save();
+    let skin = 'classic';
+    if (typeof gameMenu !== 'undefined' && gameMenu.selectedPaddleSkin) {
+        skin = gameMenu.selectedPaddleSkin;
+    }
+    if (skin === 'green') {
+        ctx.fillStyle = ctx.createLinearGradient(paddleX, 0, paddleX + paddleWidth, 0);
+        ctx.fillStyle.addColorStop(0, '#43ea4c');
+        ctx.fillStyle.addColorStop(1, '#1e7d2d');
+        ctx.strokeStyle = '#1e7d2d';
+    } else if (skin === 'red') {
+        ctx.fillStyle = ctx.createLinearGradient(paddleX, 0, paddleX + paddleWidth, 0);
+        ctx.fillStyle.addColorStop(0, '#ea4343');
+        ctx.fillStyle.addColorStop(1, '#7d1e1e');
+        ctx.strokeStyle = '#7d1e1e';
+    } else if (skin === 'blue') {
+        ctx.fillStyle = ctx.createLinearGradient(paddleX, 0, paddleX + paddleWidth, 0);
+        ctx.fillStyle.addColorStop(0, '#4387ea');
+        ctx.fillStyle.addColorStop(1, '#1e397d');
+        ctx.strokeStyle = '#1e397d';
+    } else {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#bbb';
+    }
     ctx.beginPath();
     ctx.rect(paddleX, canvas.height - paddleHeight - 5, paddleWidth, paddleHeight);
-    ctx.fillStyle = '#fff';
     ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.stroke();
     ctx.closePath();
+    ctx.restore();
 }
 
 // Проверка столкновений с блоками
@@ -415,6 +471,25 @@ function collisionDetection() {
         
         // Показываем окно победы
         if (typeof gameMenu !== 'undefined') {
+            // Если завершён 2 уровень — сначала окно получения скина
+            if (currentLevel === 2 && !window._skinRewardShown) {
+                window._skinRewardShown = true;
+                const skinRewardWindow = document.getElementById('skinRewardWindow');
+                const skinRewardOkBtn = document.getElementById('skinRewardOkBtn');
+                if (skinRewardWindow && skinRewardOkBtn) {
+                    skinRewardWindow.style.display = 'flex';
+                    // Отключаем победное окно
+                    gameMenu.victoryWindow.style.display = 'none';
+                    // При нажатии ОК — закрыть окно и показать победу
+                    skinRewardOkBtn.onclick = function() {
+                        skinRewardWindow.style.display = 'none';
+                        gameMenu.showVictoryWindow(currentLevel, formatTime(victoryTime), score);
+                    };
+                    // Разблокировать скин (на всякий случай)
+                    if (gameMenu.unlockSkin) gameMenu.unlockSkin('ball', 'smiley');
+                    return;
+                }
+            }
             gameMenu.showVictoryWindow(currentLevel, formatTime(victoryTime), score);
         }
     }

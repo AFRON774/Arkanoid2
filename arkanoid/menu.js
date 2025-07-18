@@ -23,7 +23,7 @@ class GameMenu {
         this.selectedPaddleSkin = 'classic';
         this.selectedBallSkin = 'classic';
         this.unlockedSkins = {
-            paddle: ['classic'],
+            paddle: ['classic', 'green', 'red', 'blue'],
             ball: ['classic']
         };
         
@@ -261,49 +261,72 @@ class GameMenu {
     updateSkinsDisplay() {
         // Проверяем, какие скины разблокированы
         const maxUnlockedLevel = this.getMaxUnlockedLevel();
-        
         // Разблокируем скин улыбки после 2 уровня
-        if (maxUnlockedLevel >= 2) {
+        if (maxUnlockedLevel >= 2 && !this.unlockedSkins['ball'].includes('smiley')) {
             this.unlockSkin('ball', 'smiley');
         }
-
         // Обновляем отображение скинов
         document.querySelectorAll('.skin-item').forEach(item => {
             const type = item.dataset.type;
             const skin = item.dataset.skin;
             const requirement = item.dataset.requirement;
-
-            if (requirement) {
-                const requiredLevel = parseInt(requirement.replace('level', ''));
-                if (maxUnlockedLevel >= requiredLevel) {
-                    item.classList.remove('locked');
-                    if (!this.unlockedSkins[type].includes(skin)) {
-                        this.unlockedSkins[type].push(skin);
-                    }
-                } else {
-                    item.classList.add('locked');
-                }
+            // Удаляю overlay, если он был
+            let overlay = item.querySelector('.overlay');
+            if (overlay) overlay.remove();
+            // Скрываю скин 'улыбка', если он есть в DOM, но не разблокирован
+            if (skin === 'smiley' && !this.unlockedSkins[type].includes('smiley')) {
+                item.style.display = 'none';
+            } else {
+                item.style.display = '';
             }
         });
-
+        // Если скин 'улыбка' разблокирован, но его нет в DOM — добавляю
+        if (this.unlockedSkins['ball'].includes('smiley')) {
+            // Ищем .skin-category, где h3 содержит 'Шар'
+            const categories = document.querySelectorAll('.skin-category');
+            let grid = null;
+            categories.forEach(cat => {
+                const h3 = cat.querySelector('h3');
+                if (h3 && h3.textContent.trim().toLowerCase().includes('шар')) {
+                    grid = cat.querySelector('.skin-grid');
+                }
+            });
+            if (grid && !grid.querySelector('.skin-item[data-skin="smiley"]')) {
+                const smiley = document.createElement('div');
+                smiley.className = 'skin-item';
+                smiley.dataset.type = 'ball';
+                smiley.dataset.skin = 'smiley';
+                smiley.innerHTML = '<div class="skin-ball smiley-ball"></div><span>Улыбка</span>';
+                grid.appendChild(smiley);
+                // Добавить обработчик выбора
+                smiley.addEventListener('click', () => {
+                    this.selectSkin('ball', 'smiley');
+                });
+            }
+        }
         this.updatePreview();
     }
 
     unlockSkin(type, skin) {
         if (!this.unlockedSkins[type].includes(skin)) {
             this.unlockedSkins[type].push(skin);
+            this.updateSkinsDisplay(); // Добавлено: обновить отображение после разблокировки
         }
     }
 
     getMaxUnlockedLevel() {
-        // В реальной игре это должно читаться из сохранений
-        // Пока возвращаем 2 для демонстрации
-        return 2;
+        // Читаем прогресс из localStorage
+        return parseInt(localStorage.getItem('arkanoid_max_level') || '1', 10);
     }
 
     showVictoryWindow(level, time, score) {
         this.gameArea.style.display = 'none';
         this.victoryWindow.style.display = 'flex';
+        // Сохраняем прогресс (максимальный достигнутый уровень)
+        const prev = parseInt(localStorage.getItem('arkanoid_max_level') || '1', 10);
+        if (level > prev) {
+            localStorage.setItem('arkanoid_max_level', String(level));
+        }
         
         // Обновляем статистику
         document.getElementById('victoryTime').textContent = time;
@@ -324,12 +347,12 @@ class GameMenu {
         if (this.currentVictoryLevel < 5) {
             this.selectedLevel = this.currentVictoryLevel + 1;
             this.hideMenu();
-            
+            // Сброс показа окна скина
+            window._skinRewardShown = false;
             // Устанавливаем выбранный уровень
             if (typeof currentLevel !== 'undefined') {
                 currentLevel = this.selectedLevel;
             }
-            
             // Запускаем игру
             if (typeof initGame === 'function') {
                 initGame();
@@ -339,12 +362,12 @@ class GameMenu {
 
     replayLevel() {
         this.hideMenu();
-        
+        // Сброс показа окна скина
+        window._skinRewardShown = false;
         // Устанавливаем текущий уровень
         if (typeof currentLevel !== 'undefined') {
             currentLevel = this.currentVictoryLevel;
         }
-        
         // Запускаем игру
         if (typeof initGame === 'function') {
             initGame();
