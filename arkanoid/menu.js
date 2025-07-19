@@ -89,6 +89,10 @@ class GameMenu {
 
         if (this.backToMenuFromVictoryBtn) {
             this.backToMenuFromVictoryBtn.addEventListener('click', () => {
+                // Останавливаем игровую музыку при возврате в меню
+                if (typeof audioManager !== 'undefined') {
+                    audioManager.stopBackgroundMusic();
+                }
                 this.showMenu();
             });
         }
@@ -220,17 +224,29 @@ class GameMenu {
     addSkinsHandlers() {
         const skinItems = document.querySelectorAll('.skin-item');
         skinItems.forEach(item => {
-            item.addEventListener('click', () => {
-                if (!item.classList.contains('locked')) {
-                    const type = item.dataset.type;
-                    const skin = item.dataset.skin;
-                    this.selectSkin(type, skin);
-                }
+            // Полностью удаляем все старые обработчики через пересоздание элемента
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+        });
+        // Теперь навешиваем обработчик только на разблокированные
+        document.querySelectorAll('.skin-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const type = item.dataset.type;
+                const skin = item.dataset.skin;
+                this.selectSkin(type, skin);
             });
         });
     }
 
     selectSkin(type, skin) {
+        // Финальная строгая проверка: нельзя выбрать скин, если он не разблокирован
+        if (!this.unlockedSkins[type] || !this.unlockedSkins[type].includes(skin)) {
+            return;
+        }
+        const item = document.querySelector(`.skin-item[data-type="${type}"][data-skin="${skin}"]`);
+        if (item && item.classList.contains('locked')) {
+            return; // Нельзя выбрать заблокированный скин
+        }
         if (type === 'paddle') {
             this.selectedPaddleSkin = skin;
         } else if (type === 'ball') {
@@ -259,67 +275,48 @@ class GameMenu {
     }
 
     updateSkinsDisplay() {
-        // Проверяем, какие скины разблокированы
-        const maxUnlockedLevel = this.getMaxUnlockedLevel();
-        // Разблокируем скин улыбки после 2 уровня
-        if (maxUnlockedLevel >= 2 && !this.unlockedSkins['ball'].includes('smiley')) {
-            this.unlockSkin('ball', 'smiley');
-        }
-        // Обновляем отображение скинов
+        // Все скины доступны сразу
+        this.unlockedSkins['ball'] = ['classic', 'smiley'];
+        // Удаляем все элементы скина 'улыбка' чтобы не было дубликатов
+        document.querySelectorAll('.skin-item[data-skin="smiley"]').forEach(item => item.remove());
+        // Обновляем отображение скинов (кроме улыбки)
         document.querySelectorAll('.skin-item').forEach(item => {
             const type = item.dataset.type;
             const skin = item.dataset.skin;
-            const requirement = item.dataset.requirement;
-            // Удаляю overlay, если он был
+            if (skin === 'smiley') return;
             let overlay = item.querySelector('.overlay');
             if (overlay) overlay.remove();
-            // Скрываю скин 'улыбка', если он есть в DOM, но не разблокирован
-            if (skin === 'smiley' && !this.unlockedSkins[type].includes('smiley')) {
-                item.style.display = 'none';
-            } else {
-                item.style.display = '';
+            item.classList.remove('locked');
+            item.style.display = '';
+        });
+        // Добавляем кнопку скина 'улыбка' всегда
+        const categories = document.querySelectorAll('.skin-category');
+        let grid = null;
+        categories.forEach(cat => {
+            const h3 = cat.querySelector('h3');
+            if (h3 && h3.textContent.trim().toLowerCase().includes('шар')) {
+                grid = cat.querySelector('.skin-grid');
             }
         });
-        // Если скин 'улыбка' разблокирован, но его нет в DOM — добавляю
-        if (this.unlockedSkins['ball'].includes('smiley')) {
-            // Ищем .skin-category, где h3 содержит 'Шар'
-            const categories = document.querySelectorAll('.skin-category');
-            let grid = null;
-            categories.forEach(cat => {
-                const h3 = cat.querySelector('h3');
-                if (h3 && h3.textContent.trim().toLowerCase().includes('шар')) {
-                    grid = cat.querySelector('.skin-grid');
-                }
-            });
-            if (grid && !grid.querySelector('.skin-item[data-skin="smiley"]')) {
-                const smiley = document.createElement('div');
-                smiley.className = 'skin-item';
-                smiley.dataset.type = 'ball';
-                smiley.dataset.skin = 'smiley';
-                smiley.innerHTML = '<div class="skin-ball smiley-ball"></div><span>Улыбка</span>';
-                grid.appendChild(smiley);
-                // Добавить обработчик выбора
-                smiley.addEventListener('click', () => {
-                    this.selectSkin('ball', 'smiley');
-                });
-            }
+        if (grid && !grid.querySelector('.skin-item[data-skin="smiley"]')) {
+            const smiley = document.createElement('div');
+            smiley.className = 'skin-item';
+            smiley.dataset.type = 'ball';
+            smiley.dataset.skin = 'smiley';
+            smiley.innerHTML = '<div class="skin-ball smiley-ball"></div><span>Улыбка</span>';
+            grid.appendChild(smiley);
         }
         this.updatePreview();
+        this.addSkinsHandlers();
     }
 
-    unlockSkin(type, skin) {
-        if (!this.unlockedSkins[type].includes(skin)) {
-            this.unlockedSkins[type].push(skin);
-            this.updateSkinsDisplay(); // Добавлено: обновить отображение после разблокировки
-        }
-    }
-
-    getMaxUnlockedLevel() {
-        // Читаем прогресс из localStorage
-        return parseInt(localStorage.getItem('arkanoid_max_level') || '1', 10);
-    }
+    // Удаляю функцию unlockSkin, getMaxUnlockedLevel и все проверки на разблокировку
 
     showVictoryWindow(level, time, score) {
+        // Останавливаем игровую музыку при показе окна победы
+        if (typeof audioManager !== 'undefined') {
+            audioManager.stopBackgroundMusic();
+        }
         this.gameArea.style.display = 'none';
         this.victoryWindow.style.display = 'flex';
         // Сохраняем прогресс (максимальный достигнутый уровень)
@@ -327,14 +324,11 @@ class GameMenu {
         if (level > prev) {
             localStorage.setItem('arkanoid_max_level', String(level));
         }
-        
         // Обновляем статистику
         document.getElementById('victoryTime').textContent = time;
         document.getElementById('victoryScore').textContent = score;
-        
         // Сохраняем текущий уровень
         this.currentVictoryLevel = level;
-        
         // Проверяем, есть ли следующий уровень
         if (level >= 5) {
             this.nextLevelBtn.style.display = 'none';

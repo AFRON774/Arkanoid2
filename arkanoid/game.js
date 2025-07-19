@@ -471,25 +471,6 @@ function collisionDetection() {
         
         // Показываем окно победы
         if (typeof gameMenu !== 'undefined') {
-            // Если завершён 2 уровень — сначала окно получения скина
-            if (currentLevel === 2 && !window._skinRewardShown) {
-                window._skinRewardShown = true;
-                const skinRewardWindow = document.getElementById('skinRewardWindow');
-                const skinRewardOkBtn = document.getElementById('skinRewardOkBtn');
-                if (skinRewardWindow && skinRewardOkBtn) {
-                    skinRewardWindow.style.display = 'flex';
-                    // Отключаем победное окно
-                    gameMenu.victoryWindow.style.display = 'none';
-                    // При нажатии ОК — закрыть окно и показать победу
-                    skinRewardOkBtn.onclick = function() {
-                        skinRewardWindow.style.display = 'none';
-                        gameMenu.showVictoryWindow(currentLevel, formatTime(victoryTime), score);
-                    };
-                    // Разблокировать скин (на всякий случай)
-                    if (gameMenu.unlockSkin) gameMenu.unlockSkin('ball', 'smiley');
-                    return;
-                }
-            }
             gameMenu.showVictoryWindow(currentLevel, formatTime(victoryTime), score);
         }
     }
