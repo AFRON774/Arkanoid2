@@ -197,6 +197,7 @@
 </head>
 <body>
     <div class="tower-menu" id="main-menu">
+        <button id="menuMusicBtn" style="position:absolute;top:18px;right:18px;font-size:1.7rem;background:none;border:none;cursor:pointer;z-index:10;">🎵</button>
         <div class="tower-icon">
             <div class="arrow">
                 <div class="arrow-head"></div>
@@ -225,6 +226,7 @@
         <span id="wave-num" style="font-size:1.3rem;font-weight:600;color:#fff;text-shadow:0 2px 8px #000a;">1</span>
     </div>
     <div id="defeat-actions" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:220;gap:24px;display:flex;"></div>
+    <script src="../arkanoid/audio.js"></script>
     <script>
     // --- Переключение окон ---
     const playBtn = document.getElementById('play-btn');
@@ -239,10 +241,14 @@
     let wave = 1;
     let waveInProgress = false;
     let gameOver = false;
-    const TOWER_COSTS = { archer: 25, mage: 50 };
-    const TOWER_RADIUS = { archer: 180, mage: 160 };
-    const TOWER_DAMAGE = { archer: 2, mage: 1 };
-    const TOWER_CHAIN = { archer: 1, mage: 3 };
+    const TOWER_COSTS = { archer: 25, mage: 50, gatling: 50 };
+    const TOWER_RADIUS = { archer: 180, mage: 160, gatling: 140 };
+    const TOWER_DAMAGE = { archer: 2, mage: 1, gatling: 1 };
+    const TOWER_CHAIN = { archer: 1, mage: 3, gatling: 1 };
+    // Добавляем параметры пулемёта
+    const GATLING_MAG_SIZE = 6;
+    const GATLING_FIRE_DELAY = 6; // 0.1 сек при 60 FPS
+    const GATLING_RELOAD_TIME = 120; // 2 сек при 60 FPS
     // --- pathPoints и buildSpots ---
     let pathPoints = [];
     let buildSpots = [];
@@ -383,6 +389,11 @@
                 <div class="tower-label">Башня мага</div>
                 <div class="tower-cost">50🪙</div>
             </div>
+            <div class="tower-choice" data-type="gatling">
+                <div class="tower-icon-choice">🔫</div>
+                <div class="tower-label">Пулемёт</div>
+                <div class="tower-cost">50🪙</div>
+            </div>
         `;
         menu.onclick = e => e.stopPropagation();
         menu.querySelectorAll('.tower-choice').forEach(choice => {
@@ -420,8 +431,42 @@
             if (archerTowerImg.complete) {
                 ctx.drawImage(archerTowerImg, -24, -32, 48, 48);
             }
+        } else if (tower.type==='gatling') {
+            // Пулемёт: простая иконка
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, 0, 2*Math.PI);
+            ctx.fillStyle = '#38bdf8';
+            ctx.shadowColor = '#0ea5e9';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.rect(-8, -28, 16, 16);
+            ctx.fillStyle = '#1e293b';
+            ctx.fill();
+            ctx.font = '20px Arial'; ctx.fillStyle = '#fff'; ctx.fillText('🔫', -12, 10);
+            // Синяя шкала боезапаса
+            let ammo = tower.gatlingAmmo ?? GATLING_MAG_SIZE;
+            let reload = tower.gatlingReload ?? 0;
+            let barH = 44, barW = 8;
+            ctx.save();
+            ctx.translate(28, -barH/2);
+            ctx.beginPath();
+            ctx.rect(0, 0, barW, barH);
+            ctx.fillStyle = '#334155';
+            ctx.fill();
+            if (reload > 0) {
+                // Перезарядка — анимируем заполнение
+                let frac = 1 - reload / GATLING_RELOAD_TIME;
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(0, barH*(1-frac), barW, barH*frac);
+            } else {
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillRect(0, barH*(1-ammo/GATLING_MAG_SIZE), barW, barH*(ammo/GATLING_MAG_SIZE));
+            }
+            ctx.restore();
         } else {
-            // Основание
+            // Башня мага
             ctx.beginPath();
             ctx.arc(0, 0, 22, 0, 2*Math.PI);
             ctx.fillStyle = '#818cf8';
@@ -429,7 +474,6 @@
             ctx.shadowBlur = 12;
             ctx.fill();
             ctx.shadowBlur = 0;
-            // Верхушка
             ctx.beginPath(); ctx.arc(0,-16,10,0,2*Math.PI); ctx.fillStyle='#fbbf24'; ctx.fill();
             ctx.font = '20px Arial'; ctx.fillStyle = '#222'; ctx.fillText('🔮', -12, 10);
         }
@@ -443,14 +487,41 @@
             if (!waveInProgress) return;
             let pack = Math.min(left, Math.floor(Math.random()*3)+1);
             for (let i=0;i<pack;i++) {
-                enemies.push({
-                    x: pathPoints[0].x,
-                    y: pathPoints[0].y,
-                    t: 0.0,
-                    speed: 0.001 + Math.random()*0.0005,
-                    hp: 1,
-                    alive: true
-                });
+                let rand = Math.random();
+                if (rand < 0.15) {
+                    // 15% шанс на большого серого врага
+                    enemies.push({
+                        x: pathPoints[0].x,
+                        y: pathPoints[0].y,
+                        t: 0.0,
+                        speed: 0.0006 + Math.random()*0.0003, // медленнее обычного
+                        hp: 3,
+                        alive: true,
+                        type: 'tank'
+                    });
+                } else if (rand < 0.30) {
+                    // 15% шанс на быстрого врага
+                    enemies.push({
+                        x: pathPoints[0].x,
+                        y: pathPoints[0].y,
+                        t: 0.0,
+                        speed: 0.0017 + Math.random()*0.0005, // быстрее обычного
+                        hp: 1,
+                        alive: true,
+                        type: 'fast'
+                    });
+                } else {
+                    // обычный враг
+                    enemies.push({
+                        x: pathPoints[0].x,
+                        y: pathPoints[0].y,
+                        t: 0.0,
+                        speed: 0.001 + Math.random()*0.0005,
+                        hp: 1,
+                        alive: true,
+                        type: 'normal'
+                    });
+                }
             }
             console.log('Враги добавлены, всего:', enemies.length);
             left -= pack;
@@ -503,9 +574,19 @@
             ctx.save();
             ctx.translate(enemy.x, enemy.y);
             ctx.beginPath();
-            ctx.arc(0, 0, 13, 0, 2*Math.PI);
-            ctx.fillStyle = '#22c55e';
-            ctx.shadowColor = '#16a34a';
+            let radius = 13;
+            if (enemy.type === 'tank') radius = 20;
+            ctx.arc(0, 0, radius, 0, 2*Math.PI);
+            if (enemy.type === 'fast') {
+                ctx.fillStyle = '#166534'; // более тёмный зелёный
+                ctx.shadowColor = '#166534';
+            } else if (enemy.type === 'tank') {
+                ctx.fillStyle = '#6b7280'; // серый
+                ctx.shadowColor = '#374151';
+            } else {
+                ctx.fillStyle = '#22c55e';
+                ctx.shadowColor = '#16a34a';
+            }
             ctx.shadowBlur = 12;
             ctx.fill();
             ctx.shadowBlur = 0;
@@ -514,24 +595,91 @@
         // Стрельба башен
         towers.forEach(tower => {
             tower.cooldown = (tower.cooldown||0) - 1;
-            // Найти врагов в радиусе
-            let inRange = enemies.filter(e => e.alive && Math.hypot(e.x-tower.x, e.y-tower.y) < TOWER_RADIUS[tower.type] && e.hp > 0);
-            if (inRange.length && tower.cooldown<=0 && !gameOver) {
-                if (tower.type==='archer') {
-                    // По одному врагу
-                    shootArrow(tower, inRange[0]);
-                    inRange[0].hp -= TOWER_DAMAGE.archer;
-                    if (inRange[0].hp <= 0) { inRange[0].alive = false; setCoins(coins+1); }
-                } else {
-                    // По цепочке до 3 врагов
-                    let chain = inRange.slice(0, TOWER_CHAIN.mage);
-                    chain.forEach(e=>{
-                        shootLightning(tower, e);
-                        e.hp -= TOWER_DAMAGE.mage;
-                        if (e.hp <= 0) { e.alive = false; setCoins(coins+1); }
-                    });
+            // Пулемёт: отдельная логика
+            if (tower.type === 'gatling') {
+                if (tower.gatlingAmmo === undefined) tower.gatlingAmmo = GATLING_MAG_SIZE;
+                if (tower.gatlingReload === undefined) tower.gatlingReload = 0;
+                if (tower.gatlingFireDelay === undefined) tower.gatlingFireDelay = 0;
+                if (tower.gatlingBullets === undefined) tower.gatlingBullets = [];
+                if (tower.gatlingReload > 0) {
+                    tower.gatlingReload--;
+                    if (tower.gatlingReload === 0) {
+                        tower.gatlingAmmo = GATLING_MAG_SIZE;
+                    }
+                } else if (tower.gatlingAmmo > 0 && tower.gatlingFireDelay <= 0 && !gameOver) {
+                    // Найти врага
+                    let inRange = enemies.filter(e => e.alive && Math.hypot(e.x-tower.x, e.y-tower.y) < TOWER_RADIUS.gatling && e.hp > 0);
+                    if (inRange.length) {
+                        // Стреляем пулей
+                        let target = inRange[0];
+                        tower.gatlingBullets.push({
+                            x: tower.x,
+                            y: tower.y-10,
+                            target: target,
+                            progress: 0
+                        });
+                        target.hp -= 1;
+                        if (target.hp <= 0) {
+                            target.alive = false;
+                            setCoins(coins + (target.type === 'tank' ? 3 : 1));
+                        }
+                        tower.gatlingAmmo--;
+                        tower.gatlingFireDelay = GATLING_FIRE_DELAY;
+                        if (tower.gatlingAmmo === 0) {
+                            tower.gatlingReload = GATLING_RELOAD_TIME;
+                        }
+                    }
                 }
-                tower.cooldown = 60; // задержка между выстрелами
+                if (tower.gatlingFireDelay > 0) tower.gatlingFireDelay--;
+            } else if (tower.type === 'archer' || tower.type === 'mage') {
+                // Логика стрельбы обычных башен
+                let inRange = enemies.filter(e => e.alive && Math.hypot(e.x-tower.x, e.y-tower.y) < TOWER_RADIUS[tower.type] && e.hp > 0);
+                if (inRange.length && tower.cooldown<=0 && !gameOver) {
+                    if (tower.type==='archer') {
+                        // По одному врагу
+                        shootArrow(tower, inRange[0]);
+                        inRange[0].hp -= TOWER_DAMAGE.archer;
+                        if (inRange[0].hp <= 0) {
+                            inRange[0].alive = false;
+                            setCoins(coins + (inRange[0].type === 'tank' ? 3 : 1));
+                        }
+                    } else {
+                        // По цепочке до 3 врагов
+                        let chain = inRange.slice(0, TOWER_CHAIN.mage);
+                        chain.forEach(e=>{
+                            shootLightning(tower, e);
+                            e.hp -= TOWER_DAMAGE.mage;
+                            if (e.hp <= 0) {
+                                e.alive = false;
+                                setCoins(coins + (e.type === 'tank' ? 3 : 1));
+                            }
+                        });
+                    }
+                    tower.cooldown = 60; // задержка между выстрелами
+                }
+            }
+        });
+        // Анимация пуль пулемёта
+        towers.forEach(tower => {
+            if (tower.type === 'gatling' && tower.gatlingBullets) {
+                tower.gatlingBullets.forEach(bullet => {
+                    if (!bullet.target.alive) bullet.progress = 1;
+                    bullet.progress += 0.12;
+                    let tx = bullet.target.x, ty = bullet.target.y;
+                    bullet.x += (tx - bullet.x) * bullet.progress;
+                    bullet.y += (ty - bullet.y) * bullet.progress;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 4, 0, 2*Math.PI);
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.shadowColor = '#0ea5e9';
+                    ctx.shadowBlur = 8;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
+                });
+                // Удаляем долетевшие
+                tower.gatlingBullets = tower.gatlingBullets.filter(bullet => bullet.progress < 1);
             }
         });
         // Удаляем убитых врагов
@@ -548,6 +696,11 @@
         gameOver = true;
         waveInProgress = false;
         document.getElementById('wave-ui').style.display = 'none';
+        // Останавливаем музыку игры и проигрываем грустный звук
+        if (window.audioManager) {
+            audioManager.stopBackgroundMusic();
+            audioManager.playGameOver();
+        }
         // Показываем defeat-actions
         const defeatActions = document.getElementById('defeat-actions');
         defeatActions.innerHTML = `
@@ -558,6 +711,8 @@
         document.getElementById('defeat-restart').onclick = () => {
             defeatActions.style.display = 'none';
             resetGame();
+            // Запускаем воинственную музыку при повторной игре
+            startBattleMusic();
             gameLoop();
         };
         document.getElementById('defeat-menu').onclick = () => {
@@ -596,6 +751,109 @@
         ctx.setLineDash([]);
         ctx.restore();
     }
+    function shootGatling(tower, enemy) {
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(tower.x, tower.y-10);
+        ctx.lineTo(enemy.x, enemy.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+    // --- Музыка меню башенной защиты ---
+    const menuMusicBtn = document.getElementById('menuMusicBtn');
+    let menuMusicWasPlaying = false;
+
+    // Грациозная мелодия для меню башенной защиты
+    function startTowerMenuMusic() {
+        if (!window.audioManager) window.audioManager = new AudioManager();
+        audioManager.stopBackgroundMusic();
+        // Грациозная мелодия (пример: плавная последовательность)
+        const melody = [
+            { freq: 392, duration: 0.4 }, // G4
+            { freq: 523, duration: 0.4 }, // C5
+            { freq: 659, duration: 0.4 }, // E5
+            { freq: 784, duration: 0.8 }, // G5
+            { freq: 659, duration: 0.4 }, // E5
+            { freq: 523, duration: 0.4 }, // C5
+            { freq: 392, duration: 0.8 }, // G4
+            { freq: 523, duration: 0.4 }, // C5
+            { freq: 659, duration: 0.4 }, // E5
+            { freq: 784, duration: 0.8 }, // G5
+            { freq: 880, duration: 0.4 }, // A5
+            { freq: 784, duration: 0.8 }  // G5
+        ];
+        let noteIdx = 0;
+        audioManager.musicInterval = setInterval(() => {
+            if (noteIdx >= melody.length) noteIdx = 0;
+            const note = melody[noteIdx];
+            audioManager.createMusicTone(note.freq, note.duration, 'triangle');
+            noteIdx++;
+        }, 400);
+    }
+    function stopTowerMenuMusic() {
+        if (window.audioManager) audioManager.stopBackgroundMusic();
+    }
+    menuMusicBtn.addEventListener('click', () => {
+        if (!window.audioManager) window.audioManager = new AudioManager();
+        if (audioManager.musicInterval) {
+            stopTowerMenuMusic();
+            menuMusicWasPlaying = false;
+            menuMusicBtn.textContent = '🔇';
+        } else {
+            startTowerMenuMusic();
+            menuMusicWasPlaying = true;
+            menuMusicBtn.textContent = '🎵';
+        }
+    });
+    // При открытии меню — восстанавливаем состояние
+    function updateMenuMusicButton() {
+        if (window.audioManager && audioManager.musicInterval) {
+            menuMusicBtn.textContent = '🎵';
+        } else {
+            menuMusicBtn.textContent = '🔇';
+        }
+    }
+    if (typeof mainMenu !== 'undefined') {
+        mainMenu.addEventListener('show', () => {
+            updateMenuMusicButton();
+        });
+    }
+    updateMenuMusicButton();
+    // --- Музыка для самой игры (воинственная и суровая) ---
+    function startBattleMusic() {
+        if (!window.audioManager) window.audioManager = new AudioManager();
+        audioManager.stopBackgroundMusic();
+        // Новый суровый мотив для игры
+        const melody = [
+            { freq: 220, duration: 0.35 }, // A3
+            { freq: 277, duration: 0.25 }, // C#4
+            { freq: 349, duration: 0.35 }, // F4
+            { freq: 415, duration: 0.25 }, // G#4
+            { freq: 392, duration: 0.25 }, // G4
+            { freq: 349, duration: 0.25 }, // F4
+            { freq: 293, duration: 0.35 }, // D4
+            { freq: 220, duration: 0.5 },  // A3
+            { freq: 293, duration: 0.25 }, // D4
+            { freq: 349, duration: 0.25 }, // F4
+            { freq: 392, duration: 0.35 }, // G4
+            { freq: 440, duration: 0.25 }, // A4
+            { freq: 415, duration: 0.25 }, // G#4
+            { freq: 349, duration: 0.35 }, // F4
+            { freq: 293, duration: 0.25 }, // D4
+            { freq: 220, duration: 0.5 }   // A3
+        ];
+        let noteIdx = 0;
+        audioManager.musicInterval = setInterval(() => {
+            if (noteIdx >= melody.length) noteIdx = 0;
+            const note = melody[noteIdx];
+            audioManager.createMusicTone(note.freq, note.duration, noteIdx % 4 === 0 ? 'sawtooth' : 'square');
+            noteIdx++;
+        }, 320);
+    }
     // --- Запуск теста ---
     playBtn.onclick = () => {
         mainMenu.style.display = 'none';
@@ -604,6 +862,9 @@
         document.getElementById('wave-ui').style.display = 'flex';
         document.getElementById('defeat-actions').style.display = 'none';
         resetGame();
+        // Останавливаем музыку меню и запускаем воинственную музыку
+        stopTowerMenuMusic();
+        startBattleMusic();
         gameLoop();
     };
     document.getElementById('wave-btn').onclick = () => {
