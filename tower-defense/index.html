@@ -424,6 +424,12 @@
     // --- Рисуем башню ---
     const archerTowerImg = new Image();
     archerTowerImg.src = 'spryts/arrow_tower.png';
+    const mageTowerImg = new Image();
+    mageTowerImg.src = 'spryts/magic_tower.png';
+    const gatlingTowerImg = new Image();
+    gatlingTowerImg.src = 'spryts/minygun_tower.png';
+    const simpleEnemyImg = new Image();
+    simpleEnemyImg.src = 'spryts/simple_enemy.png';
     function drawTower(tower) {
         ctx.save();
         ctx.translate(tower.x, tower.y);
@@ -432,19 +438,9 @@
                 ctx.drawImage(archerTowerImg, -24, -32, 48, 48);
             }
         } else if (tower.type==='gatling') {
-            // Пулемёт: простая иконка
-            ctx.beginPath();
-            ctx.arc(0, 0, 22, 0, 2*Math.PI);
-            ctx.fillStyle = '#38bdf8';
-            ctx.shadowColor = '#0ea5e9';
-            ctx.shadowBlur = 12;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.beginPath();
-            ctx.rect(-8, -28, 16, 16);
-            ctx.fillStyle = '#1e293b';
-            ctx.fill();
-            ctx.font = '20px Arial'; ctx.fillStyle = '#fff'; ctx.fillText('🔫', -12, 10);
+            if (gatlingTowerImg.complete) {
+                ctx.drawImage(gatlingTowerImg, -24, -32, 48, 48);
+            }
             // Синяя шкала боезапаса
             let ammo = tower.gatlingAmmo ?? GATLING_MAG_SIZE;
             let reload = tower.gatlingReload ?? 0;
@@ -465,6 +461,10 @@
                 ctx.fillRect(0, barH*(1-ammo/GATLING_MAG_SIZE), barW, barH*(ammo/GATLING_MAG_SIZE));
             }
             ctx.restore();
+        } else if (tower.type==='mage') {
+            if (mageTowerImg.complete) {
+                ctx.drawImage(mageTowerImg, -24, -32, 48, 48);
+            }
         } else {
             // Башня мага
             ctx.beginPath();
@@ -573,23 +573,27 @@
             if (!enemy.alive) return;
             ctx.save();
             ctx.translate(enemy.x, enemy.y);
-            ctx.beginPath();
             let radius = 13;
             if (enemy.type === 'tank') radius = 20;
-            ctx.arc(0, 0, radius, 0, 2*Math.PI);
-            if (enemy.type === 'fast') {
-                ctx.fillStyle = '#166534'; // более тёмный зелёный
-                ctx.shadowColor = '#166534';
-            } else if (enemy.type === 'tank') {
-                ctx.fillStyle = '#6b7280'; // серый
-                ctx.shadowColor = '#374151';
+            if (enemy.type === 'normal' && simpleEnemyImg.complete) {
+                ctx.drawImage(simpleEnemyImg, -radius, -radius, radius*2, radius*2);
             } else {
-                ctx.fillStyle = '#22c55e';
-                ctx.shadowColor = '#16a34a';
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, 2*Math.PI);
+                if (enemy.type === 'fast') {
+                    ctx.fillStyle = '#166534'; // более тёмный зелёный
+                    ctx.shadowColor = '#166534';
+                } else if (enemy.type === 'tank') {
+                    ctx.fillStyle = '#6b7280'; // серый
+                    ctx.shadowColor = '#374151';
+                } else {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.shadowColor = '#16a34a';
+                }
+                ctx.shadowBlur = 12;
+                ctx.fill();
+                ctx.shadowBlur = 0;
             }
-            ctx.shadowBlur = 12;
-            ctx.fill();
-            ctx.shadowBlur = 0;
             ctx.restore();
         });
         // Стрельба башен
@@ -687,6 +691,10 @@
         // Если все враги уничтожены и волна была в процессе — сбрасываем waveInProgress
         if (waveInProgress && enemies.length === 0 && !gameOver) {
             waveInProgress = false;
+            // Активируем кнопку волны
+            const waveBtn = document.getElementById('wave-btn');
+            waveBtn.disabled = false;
+            waveBtn.style.opacity = '1';
         }
         if (!gameOver) requestAnimationFrame(gameLoop);
     }
@@ -865,20 +873,27 @@
         // Останавливаем музыку меню и запускаем воинственную музыку
         stopTowerMenuMusic();
         startBattleMusic();
+        // Сразу активируем кнопку волны
+        const waveBtn = document.getElementById('wave-btn');
+        waveBtn.disabled = false;
+        waveBtn.style.opacity = '1';
         gameLoop();
     };
-    document.getElementById('wave-btn').onclick = () => {
+    const waveBtn = document.getElementById('wave-btn');
+    waveBtn.onclick = () => {
+        if (waveInProgress) return; // Блокируем нажатие во время волны
         wave++;
         document.getElementById('wave-num').textContent = wave;
-        if (!waveInProgress) {
-            if (typeof window.waveEnemyCount === 'undefined') {
-                window.waveEnemyCount = 10;
-            } else {
-                let add = Math.floor(Math.random()*5)+1;
-                window.waveEnemyCount = window.waveEnemyCount + add;
-            }
-            spawnWave(window.waveEnemyCount);
+        if (typeof window.waveEnemyCount === 'undefined') {
+            window.waveEnemyCount = 10;
+        } else {
+            let add = Math.floor(Math.random()*5)+1;
+            window.waveEnemyCount = window.waveEnemyCount + add;
         }
+        spawnWave(window.waveEnemyCount);
+        // Делаем кнопку неактивной
+        waveBtn.disabled = true;
+        waveBtn.style.opacity = '0.5';
     };
     </script>
 </body>
