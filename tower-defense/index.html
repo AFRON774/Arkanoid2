@@ -430,6 +430,12 @@
     gatlingTowerImg.src = 'spryts/minygun_tower.png';
     const simpleEnemyImg = new Image();
     simpleEnemyImg.src = 'spryts/simple_enemy.png';
+    const fastEnemyImg = new Image();
+    fastEnemyImg.src = 'spryts/fast_enemy.png';
+    const tankEnemyImg = new Image();
+    tankEnemyImg.src = 'spryts/tank_enemy.png';
+    const bossImg = new Image();
+    bossImg.src = 'spryts/lord_bolota.png';
     function drawTower(tower) {
         ctx.save();
         ctx.translate(tower.x, tower.y);
@@ -483,6 +489,21 @@
     function spawnWave(n) {
         let left = n;
         waveInProgress = true;
+        // Волна 11 — только босс
+        if (wave === 11) {
+            enemies.push({
+                x: pathPoints[0].x,
+                y: pathPoints[0].y,
+                t: 0.0,
+                speed: 0.0006, // как у танка
+                hp: 50,
+                maxHp: 50,
+                alive: true,
+                type: 'boss',
+                name: 'Повелитель болота'
+            });
+            return;
+        }
         function spawnPack() {
             if (!waveInProgress) return;
             let pack = Math.min(left, Math.floor(Math.random()*3)+1);
@@ -529,6 +550,14 @@
         }
         spawnPack();
     }
+    function setWaveNumDisplay(num) {
+        const waveNumSpan = document.getElementById('wave-num');
+        if (num === 10) {
+            waveNumSpan.textContent = '‼️ ' + num + ' ‼️';
+        } else {
+            waveNumSpan.textContent = num;
+        }
+    }
     function resetGame() {
         setCoins(50);
         towers = [];
@@ -537,7 +566,7 @@
         waveInProgress = false;
         gameOver = false;
         window.waveEnemyCount = undefined;
-        document.getElementById('wave-num').textContent = wave;
+        setWaveNumDisplay(wave);
         document.getElementById('wave-ui').style.display = 'flex';
         document.getElementById('defeat-actions').style.display = 'none';
         resizeCanvas();
@@ -549,6 +578,30 @@
     // --- Анимация и стрельба ---
     function gameLoop() {
         drawGameScene();
+        // Рисуем полоску HP и имя босса, если он есть
+        const boss = enemies.find(e => e.type === 'boss' && e.alive);
+        if (boss) {
+            ctx.save();
+            const barWidth = Math.min(canvas.width * 0.6, 500);
+            const barHeight = 24;
+            const barX = (canvas.width - barWidth) / 2;
+            const barY = 40;
+            ctx.globalAlpha = 0.95;
+            ctx.fillStyle = '#222';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            ctx.fillStyle = '#ef4444';
+            const hpFrac = boss.hp / boss.maxHp;
+            ctx.fillRect(barX, barY, barWidth * hpFrac, barHeight);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+            // Имя босса
+            ctx.font = 'bold 22px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText(boss.name, canvas.width/2, barY + barHeight + 32);
+            ctx.restore();
+        }
         // Для отладки
         //console.log('Врагов на поле:', enemies.length);
         // Враги
@@ -575,8 +628,15 @@
             ctx.translate(enemy.x, enemy.y);
             let radius = 13;
             if (enemy.type === 'tank') radius = 20;
+            if (enemy.type === 'boss') radius = 36;
             if (enemy.type === 'normal' && simpleEnemyImg.complete) {
                 ctx.drawImage(simpleEnemyImg, -radius, -radius, radius*2, radius*2);
+            } else if (enemy.type === 'fast' && fastEnemyImg.complete) {
+                ctx.drawImage(fastEnemyImg, -radius, -radius, radius*2, radius*2);
+            } else if (enemy.type === 'tank' && tankEnemyImg.complete) {
+                ctx.drawImage(tankEnemyImg, -radius, -radius, radius*2, radius*2);
+            } else if (enemy.type === 'boss' && bossImg.complete) {
+                ctx.drawImage(bossImg, -radius, -radius, radius*2, radius*2);
             } else {
                 ctx.beginPath();
                 ctx.arc(0, 0, radius, 0, 2*Math.PI);
@@ -586,6 +646,9 @@
                 } else if (enemy.type === 'tank') {
                     ctx.fillStyle = '#6b7280'; // серый
                     ctx.shadowColor = '#374151';
+                } else if (enemy.type === 'boss') {
+                    ctx.fillStyle = '#111';
+                    ctx.shadowColor = '#000';
                 } else {
                     ctx.fillStyle = '#22c55e';
                     ctx.shadowColor = '#16a34a';
@@ -703,6 +766,10 @@
         if (gameWindow.style.display !== 'flex') return;
         gameOver = true;
         waveInProgress = false;
+        // Активируем кнопку волны после поражения
+        const waveBtn = document.getElementById('wave-btn');
+        waveBtn.disabled = false;
+        waveBtn.style.opacity = '1';
         document.getElementById('wave-ui').style.display = 'none';
         // Останавливаем музыку игры и проигрываем грустный звук
         if (window.audioManager) {
@@ -877,13 +944,20 @@
         const waveBtn = document.getElementById('wave-btn');
         waveBtn.disabled = false;
         waveBtn.style.opacity = '1';
+        setWaveNumDisplay(wave);
         gameLoop();
     };
     const waveBtn = document.getElementById('wave-btn');
     waveBtn.onclick = () => {
         if (waveInProgress) return; // Блокируем нажатие во время волны
         wave++;
-        document.getElementById('wave-num').textContent = wave;
+        setWaveNumDisplay(wave);
+        if (wave === 11) {
+            spawnWave(1); // только босс
+            waveBtn.disabled = true;
+            waveBtn.style.opacity = '0.5';
+            return;
+        }
         if (typeof window.waveEnemyCount === 'undefined') {
             window.waveEnemyCount = 10;
         } else {
