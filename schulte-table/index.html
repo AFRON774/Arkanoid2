@@ -11,30 +11,42 @@
     <button id="sound-btn" class="sound-btn" aria-label="Звук выкл" title="Звук выкл">
         <i class="fa-solid fa-volume-xmark"></i>
     </button>
-    <audio id="menu-music" src="menu-music.mp3" loop preload="auto"></audio>
-    <audio id="game-music" src="game-music.mp3" loop preload="auto"></audio>
+    <!-- Удалены <audio id="menu-music"> и <audio id="game-music"> -->
     <div class="container">
         <h1 class="title">Таблица Шульте</h1>
         <div id="start-screen">
-            <div id="record-label" class="record-label" style="margin-bottom:18px; display:none;"></div>
             <button id="start-btn" class="main-btn">Играть</button>
+        </div>
+        <!-- Модальное окно выбора уровня -->
+        <div id="level-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <h2 style="margin-bottom: 18px;">Выберите уровень</h2>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="level-btn" data-level="1">1 уровень (3x3, 30 сек)</button>
+                    <button class="level-btn" data-level="2">2 уровень (5x5, 40 сек)</button>
+                    <button class="level-btn" data-level="3">3 уровень (5x5, белые/чёрные клетки, 45 сек)</button>
+                    <button class="level-btn" data-level="4">4 уровень (5x5, цветные цифры, 45 сек)</button>
+                    <button class="level-btn" data-level="5">5 уровень (5x5, белые/чёрные клетки, анимированные цифры, 50 сек)</button>
+                </div>
+                <button id="close-level-modal" class="main-btn" style="margin-top:18px;">Отмена</button>
+            </div>
         </div>
         <div id="game-screen" style="display:none; flex-direction:column; align-items:center;">
             <div id="timer" class="timer" style="font-size:1.5rem; font-weight:600; margin-bottom:18px;"></div>
         </div>
-        <div id="new-record-modal" class="modal" style="display:none;">
-            <div class="modal-content">
-                <h2>Ты побил свой рекорд!</h2>
-                <div style="margin:18px 0 8px 0;">Старый рекорд: <span id="old-record"></span></div>
-                <div style="margin-bottom:18px;">Новый рекорд: <span id="new-record"></span></div>
-                <button id="close-record-modal" class="main-btn">Ок</button>
-            </div>
-        </div>
+        <!-- Окно победы -->
         <div id="win-screen" style="display:none;">
             <h2>Вы победили!</h2>
             <div id="final-time" style="margin:18px 0 8px 0;"></div>
-            <div id="final-record" style="margin-bottom:18px;"></div>
+            <div id="final-best" style="margin-bottom:18px;"></div>
             <button id="menu-btn" class="main-btn">В меню</button>
+        </div>
+    </div>
+    <!-- Окно поражения вынесено вне .container -->
+    <div id="lose-screen" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2 class="lose-title">Вы не успели!</h2>
+            <button id="lose-menu-btn" class="main-btn">В меню</button>
         </div>
     </div>
     <script src="game.js"></script>
