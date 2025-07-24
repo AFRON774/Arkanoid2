@@ -59,9 +59,9 @@
             <p class="text-xl text-white/70 mb-8 max-w-2xl mx-auto">
                 Коллекция увлекательных мини-игр для всех возрастов. Играйте, развлекайтесь и получайте удовольствие!
             </p>
-            <span class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-game-primary to-game-secondary rounded-full text-white font-semibold hover:shadow-lg hover:shadow-game-primary/25 transition-all duration-300 transform hover:scale-105 cursor-pointer">
-                <i class="fa-solid fa-play mr-2"></i>
-                Начать играть
+            <span id="random-game-btn" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-game-primary to-game-secondary rounded-full text-white font-semibold hover:shadow-lg hover:shadow-game-primary/25 transition-all duration-300 transform hover:scale-105 cursor-pointer">
+                <i class="fa-solid fa-dice mr-2"></i>
+                Случайная игра!
             </span>
         </div>
     </section>
@@ -73,7 +73,7 @@
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div id="game-card-arkanoid" class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-game-accent/50 hover:shadow-xl hover:shadow-game-accent/20 transition-all duration-300 transform hover:scale-105 cursor-pointer">
-                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Arkanoid.png" alt="Арканоид" />
+                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="img/prevu_arkanoid.png" alt="Арканоид" />
                     <h4 class="text-xl font-semibold mb-2 text-game-accent">Арканоид 2</h4>
                     <p class="text-white/70 mb-4">Классическая аркада на HTML5 Canvas. Разбей все блоки и не дай мячу упасть!</p>
                     <a href="arkanoid/index.html" class="inline-block mt-2 w-full">
@@ -83,9 +83,9 @@
                     </a>
                 </div>
                 <div id="game-card-tower-defense" class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-game-accent/50 hover:shadow-xl hover:shadow-game-accent/20 transition-all duration-300 transform hover:scale-105 cursor-pointer">
-                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="https://cdn.pixabay.com/photo/2017/01/31/13/14/target-2023977_1280.png" alt="Башенная защита" />
+                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="img/prevu_tower_defence.png" alt="Башенная защита" />
                     <h4 class="text-xl font-semibold mb-2 text-game-accent">Башенная защита</h4>
-                    <p class="text-white/70 mb-4">Обороняй башню, стреляя по летающим мишеням! Мини-игра на реакцию и меткость.</p>
+                    <p class="text-white/70 mb-4">Стройте башни и не дайте врагам дойти до вашего замка!</p>
                     <a href="tower-defense/index.html" class="inline-block mt-2 w-full">
                         <button class="w-full bg-gradient-to-r from-game-primary to-game-secondary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all duration-300 font-semibold text-lg">
                             Играть
@@ -93,10 +93,20 @@
                     </a>
                 </div>
                 <div id="game-card-schulte" class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-game-accent/50 hover:shadow-xl hover:shadow-game-accent/20 transition-all duration-300 transform hover:scale-105 cursor-pointer">
-                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="https://upload.wikimedia.org/wikipedia/commons/2/2b/Schulte_table_example.png" alt="Таблица Шульте" />
+                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="img/prevu_shulte_tabel.png" alt="Таблица Шульте" />
                     <h4 class="text-xl font-semibold mb-2 text-game-accent">Таблица Шульте</h4>
                     <p class="text-white/70 mb-4">Тренируй внимание и скорость реакции! Найди все числа по порядку как можно быстрее.</p>
                     <a href="schulte-table/index.html" class="inline-block mt-2 w-full">
+                        <button class="w-full bg-gradient-to-r from-game-primary to-game-secondary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all duration-300 font-semibold text-lg">
+                            Играть
+                        </button>
+                    </a>
+                </div>
+                <div id="game-card-text-quest" class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-game-accent/50 hover:shadow-xl hover:shadow-game-accent/20 transition-all duration-300 transform hover:scale-105 cursor-pointer">
+                    <img class="w-full h-48 object-cover rounded-xl mb-4" src="img/prevu_text_quest.png" alt="Текстовый квест" />
+                    <h4 class="text-xl font-semibold mb-2 text-game-accent">Текстовый квест</h4>
+                    <p class="text-white/70 mb-4">Интерактивное приключение с выбором! Пройди квест и узнай свою судьбу.</p>
+                    <a href="text-quest/index.html" class="inline-block mt-2 w-full">
                         <button class="w-full bg-gradient-to-r from-game-primary to-game-secondary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all duration-300 font-semibold text-lg">
                             Играть
                         </button>
@@ -114,7 +124,7 @@
                         Обо мне
                     </h3>
                     <p class="text-lg text-white/80 mb-6 leading-relaxed">
-                        Привет! Меня зовут AFRON774, и я увлеченный разработчик игр. Создаю мини-игры уже более 5 лет, стремясь сделать их простыми, но захватывающими. Каждая игра создается с любовью и вниманием к деталям.
+                        Привет! Меня зовут AFRON774, и я увлеченный разработчик игр. Создаю мини-игры уже более 10 дней, стремясь сделать их простыми, но захватывающими. Каждая игра создается с любовью и вниманием к деталям.
                     </p>
                     <p class="text-lg text-white/80 leading-relaxed">
                         Моя цель - подарить людям радость и позитивные эмоции через игры. Надеюсь, что мои творения принесут вам удовольствие!
@@ -192,6 +202,23 @@
         </div>
     </div>
 </footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const games = [
+            'arkanoid/index.html',
+            'tower-defense/index.html',
+            'schulte-table/index.html'
+        ];
+        const btn = document.getElementById('random-game-btn');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                const random = games[Math.floor(Math.random() * games.length)];
+                window.location.href = random;
+            });
+        }
+    });
+</script>
 
 </body>
 </html> 
