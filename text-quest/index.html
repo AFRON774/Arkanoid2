@@ -9,6 +9,9 @@
 <body>
     <div id="game-container">
         <h1>Текстовый квест</h1>
+        <div id="coins-bar" style="position:absolute; top:16px; right:32px; background:#232526; color:#ffd700; padding:8px 18px; border-radius:10px; font-weight:bold; font-size:1.1em; display:none; z-index:3000;">
+            Монеты: <span id="coins-value">0</span>
+        </div>
         <button id="start-btn">Играть</button>
         <div id="character-select" style="display:none;">
             <h2>Выберите персонажа</h2>
@@ -19,9 +22,34 @@
             </div>
         </div>
         <div id="main-game" style="display:none;">
-            <div id="game-area"></div>
+            <div id="game-area" style="display:inline-block; vertical-align:top;"></div>
+            <button id="inventory-btn" style="float:right; margin-left:24px;">Инвентарь</button>
+            <button id="character-btn" style="float:right; margin-left:12px;">Персонаж</button>
             <div id="chat-window"></div>
         </div>
+        <div id="inventory-modal" style="display:none; position:fixed; right:40px; top:60px; background:#232526; color:#fff; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.3); padding:24px; z-index:2000; min-width:260px;">
+            <h2 style="margin-top:0;">Инвентарь</h2>
+            <div id="inventory-list"></div>
+            <button id="close-inventory" style="margin-top:16px;">Закрыть</button>
+        </div>
+        <div id="character-modal" style="display:none; position:fixed; right:40px; top:120px; background:#232526; color:#fff; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.3); padding:24px; z-index:2100; min-width:300px;">
+            <h2 style="margin-top:0;">Персонаж</h2>
+            <label for="char-name-input">Имя:</label>
+            <input id="char-name-input" type="text" maxlength="16" style="margin-bottom:10px; width:80%;"><br>
+            <label>Основной предмет:</label>
+            <select id="main-equip-select" style="margin-bottom:10px; width:90%;"></select><br>
+            <label>Доп. предмет:</label>
+            <select id="extra-equip-select" style="margin-bottom:10px; width:90%;"></select><br>
+            <button id="save-character" style="margin-top:10px;">Сохранить</button>
+            <button id="close-character" style="margin-top:10px; margin-left:10px;">Закрыть</button>
+        </div>
+        <div id="npc-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:2200; align-items:center; justify-content:center;">
+  <div style="background:#232526; color:#fff; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.3); padding:24px; min-width:260px; max-width:90vw; margin:auto; text-align:center;">
+    <h2 style="margin-top:0;">С кем взаимодействовать?</h2>
+    <div id="npc-list"></div>
+    <button id="close-npc-modal" style="margin-top:16px;">Отмена</button>
+  </div>
+</div>
     </div>
     <script src="game.js"></script>
 </body>
