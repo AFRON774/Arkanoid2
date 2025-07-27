@@ -245,7 +245,14 @@ document.addEventListener('DOMContentLoaded', function() {
         moveBtn.className = 'action-btn';
         moveBtn.onclick = onMove;
         gameArea.appendChild(interactBtn);
-        gameArea.appendChild(moveBtn);
+        // Кнопка навыков
+        const skillsBtn = document.createElement('button');
+        skillsBtn.textContent = 'Навыки';
+        skillsBtn.className = 'action-btn';
+        skillsBtn.style.marginLeft = '12px';
+        skillsBtn.onclick = showSkillsWindow;
+        gameArea.appendChild(skillsBtn);
+        // Кнопка рынка
         if (currentLocation === 'city') {
             const marketBtn = document.createElement('button');
             marketBtn.textContent = 'Рынок';
@@ -253,6 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
             marketBtn.onclick = showMarketWindow;
             gameArea.appendChild(marketBtn);
         }
+        gameArea.appendChild(moveBtn);
     }
 
     function showNpcModal(npcs) {
@@ -551,6 +559,46 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(modal);
     }
 
+    // Модальное окно навыков (заглушка)
+    function showSkillsWindow() {
+        let oldModal = document.getElementById('skills-modal');
+        if (oldModal) oldModal.remove();
+        const modal = document.createElement('div');
+        modal.id = 'skills-modal';
+        modal.style.position = 'fixed';
+        modal.style.left = '0';
+        modal.style.top = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0,0,0,0.7)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '2000';
+        const box = document.createElement('div');
+        box.style.background = '#232526';
+        box.style.padding = '32px 24px';
+        box.style.borderRadius = '16px';
+        box.style.boxShadow = '0 8px 32px 0 rgba(31, 38, 135, 0.37)';
+        box.style.textAlign = 'center';
+        box.style.minWidth = '320px';
+        const title = document.createElement('div');
+        title.textContent = 'Окно навыков';
+        title.style.fontSize = '1.3rem';
+        title.style.marginBottom = '18px';
+        box.appendChild(title);
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Закрыть';
+        closeBtn.className = 'action-btn';
+        closeBtn.style.marginTop = '18px';
+        closeBtn.onclick = function() {
+            modal.remove();
+        };
+        box.appendChild(closeBtn);
+        modal.appendChild(box);
+        document.body.appendChild(modal);
+    }
+
     startBtn.onclick = function() {
         startBtn.style.display = 'none';
         charSelect.style.display = '';
@@ -603,11 +651,23 @@ document.addEventListener('DOMContentLoaded', function() {
         let playerPos = null;
         let turn = 'player';
         let message = '';
-        // Генерируем стартовые позиции гоблинов
-        goblins = [
-            { hp: 1, pos: randomEmptyCell([], rows, cols) },
-            { hp: 1, pos: randomEmptyCell([], rows, cols) }
-        ];
+        // --- Новая генерация стартовых позиций гоблинов ---
+        const enemyCount = 2; // Можно изменить количество врагов
+        let occupiedCells = new Set();
+        function posKey(x, y) { return `${x},${y}`; }
+        // Временная позиция игрока (левый ряд, случайная строка)
+        let tempPlayerPos = { x: Math.floor(Math.random() * rows), y: 0 };
+        occupiedCells.add(posKey(tempPlayerPos.x, tempPlayerPos.y));
+        goblins = [];
+        for (let i = 0; i < enemyCount; i++) {
+            let pos;
+            do {
+                pos = { x: Math.floor(Math.random() * rows), y: Math.floor(Math.random() * cols) };
+            } while (occupiedCells.has(posKey(pos.x, pos.y)));
+            occupiedCells.add(posKey(pos.x, pos.y));
+            goblins.push({ hp: 1, pos });
+        }
+        // После выбора игроком стартовой клетки tempPlayerPos заменится на playerPos
         // Выбор стартовой клетки игрока
         renderBattleGrid();
         setBattleMessage('Выберите стартовую клетку в левом ряду');
@@ -615,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function randomEmptyCell(occupied, r, c) {
             let pos;
             do {
-                pos = { x: Math.floor(Math.random()*r), y: 0 };
+                pos = { x: Math.floor(Math.random() * r), y: Math.floor(Math.random() * c) };
             } while (occupied.some(o => o.x === pos.x && o.y === pos.y));
             return pos;
         }
@@ -653,15 +713,84 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     // Игрок
                     if (playerPos && playerPos.x === x && playerPos.y === y) {
-                        const hero = document.createElement('div');
-                        hero.style.width = '32px';
-                        hero.style.height = '32px';
-                        hero.style.background = '#ffd700';
-                        hero.style.borderRadius = '50%';
-                        hero.style.border = '2px solid #fff';
-                        hero.title = 'Вы';
-                        cell.appendChild(hero);
+                        if (player === 'warrior') {
+                            const hero = document.createElement('img');
+                            hero.src = 'sprite_quest/warrior_spryte.png';
+                            hero.alt = 'Воин';
+                            hero.style.width = '32px';
+                            hero.style.height = '32px';
+                            // Убраны borderRadius и border
+                            hero.title = 'Вы (Воин)';
+                            cell.appendChild(hero);
+                        } else {
+                            const hero = document.createElement('div');
+                            hero.style.width = '32px';
+                            hero.style.height = '32px';
+                            hero.style.background = '#ffd700';
+                            hero.style.borderRadius = '50%';
+                            hero.style.border = '2px solid #fff';
+                            hero.title = 'Вы';
+                            cell.appendChild(hero);
+                        }
                     }
+                    // --- Новое: точки для возможных ходов и атак ---
+                    if (typeof turn !== 'undefined' && turn === 'player' && playerPos) {
+                        let isArcher = player === 'archer';
+                        let isBow = false, range = 1;
+                        if (isArcher && mainEquip) {
+                            const item = inventory.find(i => i.name === mainEquip);
+                            if (item && item.name.toLowerCase().includes('лук')) {
+                                isBow = true;
+                                const m = item.desc && item.desc.match(/дальность (\d+)/);
+                                if (m) range = parseInt(m[1]);
+                            }
+                        }
+                        // Движение
+                        let canMove = false;
+                        if (isArcher) {
+                            const dx = Math.abs(playerPos.x - x);
+                            const dy = Math.abs(playerPos.y - y);
+                            if ((dx === 2 && dy === 0) || (dx === 0 && dy === 2) || (dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                                if (!goblins.some(g => g.pos.x === x && g.pos.y === y)) canMove = true;
+                            }
+                        } else {
+                            if (isNeighbor(playerPos, { x, y }) && !goblins.some(g => g.pos.x === x && g.pos.y === y)) canMove = true;
+                        }
+                        // Атака
+                        let canAttack = false;
+                        if (isArcher && isBow) {
+                            const dist = Math.abs(playerPos.x - x) + Math.abs(playerPos.y - y);
+                            if (goblins.some(g => g.pos.x === x && g.pos.y === y && g.hp > 0) && dist > 1 && dist <= range) canAttack = true;
+                        } else {
+                            if (isNeighbor(playerPos, { x, y }) && goblins.some(g => g.pos.x === x && g.pos.y === y && g.hp > 0)) canAttack = true;
+                        }
+                        // Рисуем точки
+                        if (canMove && !(playerPos.x === x && playerPos.y === y)) {
+                            const dot = document.createElement('div');
+                            dot.style.width = '12px';
+                            dot.style.height = '12px';
+                            dot.style.background = '#0f0';
+                            dot.style.borderRadius = '50%';
+                            dot.style.position = 'absolute';
+                            dot.style.left = '16px';
+                            dot.style.top = '16px';
+                            dot.title = 'Можно переместиться';
+                            cell.appendChild(dot);
+                        }
+                        if (canAttack) {
+                            const dot = document.createElement('div');
+                            dot.style.width = '12px';
+                            dot.style.height = '12px';
+                            dot.style.background = '#f00';
+                            dot.style.borderRadius = '50%';
+                            dot.style.position = 'absolute';
+                            dot.style.left = '16px';
+                            dot.style.top = '16px';
+                            dot.title = 'Можно атаковать';
+                            cell.appendChild(dot);
+                        }
+                    }
+                    // --- конец нововведения ---
                     // Клик по клетке для выбора старта
                     if (!playerPos && y === 0) {
                         cell.style.cursor = 'pointer';
@@ -700,27 +829,75 @@ document.addEventListener('DOMContentLoaded', function() {
             turn = 'player';
             setBattleMessage('Ваш ход: выберите действие.');
             renderBattleGrid();
-            // Клик по соседним клеткам — движение, по гоблину — атака
+            // Клик по клеткам — движение или атака
             const content = document.getElementById('battle-content');
             const gridDivs = content.querySelectorAll('div[style*="grid"] > div');
             gridDivs.forEach((cell, idx) => {
                 const x = Math.floor(idx / cols);
                 const y = idx % cols;
-                if (playerPos && isNeighbor(playerPos, { x, y })) {
-                    // Гоблин — атака
-                    if (goblins.some(g => g.pos.x === x && g.pos.y === y && g.hp > 0)) {
+                // Для лучника — атака на расстоянии
+                let isArcher = player === 'archer';
+                let isBow = false, range = 1;
+                if (isArcher && mainEquip) {
+                    const item = inventory.find(i => i.name === mainEquip);
+                    if (item && item.name.toLowerCase().includes('лук')) {
+                        isBow = true;
+                        // Парсим радиус из desc (например, 'дальность 4 клетки')
+                        const m = item.desc && item.desc.match(/дальность (\d+)/);
+                        if (m) range = parseInt(m[1]);
+                    }
+                }
+                // --- Движение для лучника на 2 клетки по прямой ---
+                let canMove = false;
+                if (isArcher) {
+                    // Только по горизонтали или вертикали, не по диагонали
+                    const dx = Math.abs(playerPos.x - x);
+                    const dy = Math.abs(playerPos.y - y);
+                    if ((dx === 2 && dy === 0) || (dx === 0 && dy === 2) || (dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        if (!goblins.some(g => g.pos.x === x && g.pos.y === y)) canMove = true;
+                    }
+                } else {
+                    // Для других классов — только соседние клетки
+                    if (isNeighbor(playerPos, { x, y }) && !goblins.some(g => g.pos.x === x && g.pos.y === y)) canMove = true;
+                }
+                // ---
+                if (isArcher && isBow) {
+                    const dist = Math.abs(playerPos.x - x) + Math.abs(playerPos.y - y);
+                    if (goblins.some(g => g.pos.x === x && g.pos.y === y && g.hp > 0) && dist > 1 && dist <= range) {
                         cell.style.cursor = 'pointer';
                         cell.onclick = () => {
-                            attackGoblin(x, y);
+                            attackGoblin(x, y, true, range);
                         };
-                    } else if (!goblins.some(g => g.pos.x === x && g.pos.y === y)) {
-                        // Пустая клетка — движение
+                    } else if (goblins.some(g => g.pos.x === x && g.pos.y === y && g.hp > 0) && dist === 1) {
+                        cell.style.cursor = 'not-allowed';
+                        cell.onclick = () => {
+                            setBattleMessage('Лучник не может атаковать вблизи!');
+                        };
+                    } else if (canMove) {
+                        // Движение (на 1 или 2 клетки по прямой)
                         cell.style.cursor = 'pointer';
                         cell.onclick = () => {
                             playerPos = { x, y };
                             renderBattleGrid();
                             setTimeout(goblinsTurn, 300);
                         };
+                    }
+                } else {
+                    // Обычная атака по соседним
+                    if (isNeighbor(playerPos, { x, y })) {
+                        if (goblins.some(g => g.pos.x === x && g.pos.y === y && g.hp > 0)) {
+                            cell.style.cursor = 'pointer';
+                            cell.onclick = () => {
+                                attackGoblin(x, y);
+                            };
+                        } else if (canMove) {
+                            cell.style.cursor = 'pointer';
+                            cell.onclick = () => {
+                                playerPos = { x, y };
+                                renderBattleGrid();
+                                setTimeout(goblinsTurn, 300);
+                            };
+                        }
                     }
                 }
             });
@@ -730,8 +907,49 @@ document.addEventListener('DOMContentLoaded', function() {
             return Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1 && !(a.x === b.x && a.y === b.y);
         }
 
-        function attackGoblin(x, y) {
-            // Урон по основному оружию
+        function attackGoblin(x, y, isRange, range) {
+            // Для лучника с луком — дальний выстрел
+            if (isRange && player === 'archer') {
+                const bow = inventory.find(i => i.name === mainEquip && i.name.toLowerCase().includes('лук'));
+                let arrows = inventory.find(i => i.name === 'Стрелы');
+                if (!bow || !arrows || arrows.count <= 0) {
+                    setBattleMessage('Нет стрел!');
+                    return;
+                }
+                // Проверка радиуса
+                const dist = Math.abs(playerPos.x - x) + Math.abs(playerPos.y - y);
+                if (dist === 0 || dist > range) {
+                    setBattleMessage('Цель вне радиуса!');
+                    return;
+                }
+                // Шанс попадания 50%
+                if (Math.random() < 0.5) {
+                    setBattleMessage('Промах!');
+                    arrows.count--;
+                    if (arrows.count <= 0) inventory = inventory.filter(i => i !== arrows);
+                    renderInventory();
+                    renderBattleGrid();
+                    setTimeout(goblinsTurn, 700);
+                    return;
+                }
+                // Попадание
+                arrows.count--;
+                if (arrows.count <= 0) inventory = inventory.filter(i => i !== arrows);
+                renderInventory();
+                let dmg = 1;
+                if (bow && bow.desc && bow.desc.match(/(\d+)/)) {
+                    dmg = parseInt(bow.desc.match(/(\d+)/)[1]);
+                }
+                goblins.forEach(g => {
+                    if (g.pos.x === x && g.pos.y === y && g.hp > 0) {
+                        g.hp -= dmg;
+                    }
+                });
+                renderBattleGrid();
+                setTimeout(goblinsTurn, 700);
+                return;
+            }
+            // Обычная атака (ближний бой)
             let dmg = 1;
             if (mainEquip) {
                 const item = inventory.find(i => i.name === mainEquip);
@@ -754,8 +972,19 @@ document.addEventListener('DOMContentLoaded', function() {
             let attacked = false;
             goblins.forEach(g => {
                 if (g.hp > 0 && isNeighbor(g.pos, playerPos)) {
-                    playerHP -= 1;
-                    attacked = true;
+                    // Проверка на броню
+                    let armor = inventory.find(i => i.name && i.name.toLowerCase().includes('броня') && i.desc && i.desc.includes('-1 к получаемому урону'));
+                    let damage = 1;
+                    if (armor) {
+                        damage -= 1; // -1 к урону
+                    }
+                    if (damage > 0) {
+                        playerHP -= damage;
+                        attacked = true;
+                    } else {
+                        // Можно добавить сообщение, что броня полностью защитила
+                        setBattleMessage('Ваша броня полностью поглотила урон!');
+                    }
                 }
             });
             if (playerHP <= 0) {
