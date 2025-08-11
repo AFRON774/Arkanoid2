@@ -48,7 +48,6 @@ playOnlineBtn.onclick = () => {
     ws = new WebSocket('ws://localhost:8080');
 
     ws.onopen = () => {
-        // Отправляем имя игрока
         const name = localStorage.getItem('sea-battle-player-name') || 'Игрок';
         ws.send(JSON.stringify({ type: 'set_name', name }));
     };
@@ -60,9 +59,29 @@ playOnlineBtn.onclick = () => {
     };
     ws.onerror = () => {
         closeSearchingModal();
-        alert('Ошибка соединения с сервером!');
+        showConnectionError();
     };
 };
+
+function showConnectionError() {
+    const errDiv = document.createElement('div');
+    errDiv.className = 'modal';
+    errDiv.innerHTML = `<div class="modal-content" style="max-width:400px;text-align:center;">
+        <h2>Ошибка соединения с сервером</h2>
+        <p>Не удалось подключиться к серверу WebSocket.<br><br>
+        Проверьте, что сервер <b>sea-battle/server.js</b> запущен на вашем компьютере.<br>
+        Также убедитесь, что вы открыли сайт через <b>локальный http-сервер</b>, а не как файл или с GitHub Pages.<br><br>
+        <b>Пример запуска:</b><br>
+        <code>node sea-battle/server.js</code><br>
+        <code>npx http-server .</code> или <code>python -m http.server 8000</code>
+        </p>
+        <button id="close-conn-err">Закрыть</button>
+    </div>`;
+    document.body.appendChild(errDiv);
+    document.getElementById('close-conn-err').onclick = () => {
+        errDiv.remove();
+    };
+}
 
 // Модальное окно поиска соперника
 function showSearchingModal() {
@@ -455,5 +474,31 @@ if (chatForm && chatInput) {
             ws.send(JSON.stringify({ type: 'chat', text }));
             chatInput.value = '';
         }
+    };
+}
+
+const startServerBtn = document.getElementById('start-server-btn');
+if (startServerBtn) {
+    startServerBtn.onclick = () => {
+        showStartServerModal();
+    };
+}
+
+function showStartServerModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `<div class="modal-content" style="max-width:420px;text-align:center;">
+        <h2>Запуск сервера</h2>
+        <p>Для онлайн-игры необходимо запустить сервер на вашем компьютере.<br><br>
+        1. Скачайте файл <b>start_sea_battle_server.bat</b>.<br>
+        2. Поместите его в папку с проектом.<br>
+        3. Дважды кликните по файлу для запуска сервера.<br><br>
+        После запуска сервера вы сможете играть онлайн с друзьями!</p>
+        <a href="start_sea_battle_server.bat" download style="display:inline-block;margin:12px 0 16px 0;font-weight:bold;">Скачать bat-файл</a><br>
+        <button id="close-server-modal">Закрыть</button>
+    </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('close-server-modal').onclick = () => {
+        modal.remove();
     };
 } 
