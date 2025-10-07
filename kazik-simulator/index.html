@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор Казика</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-900 via-yellow-700 to-yellow-900 min-h-screen flex flex-col items-center justify-center text-white">
+    <div id="main-menu" class="fixed inset-0 bg-gradient-to-br from-[#FFD700] to-[#FFFACD] flex flex-col items-center justify-center z-10">
+        <div class="absolute right-4 top-4 z-50 flex items-center gap-2 bg-white/80 px-3 py-2 rounded-xl shadow-lg">
+            <input id="promo-input" type="text" placeholder="Промо-код" class="px-2 py-1 rounded bg-yellow-100 text-yellow-900 font-bold text-base outline-none w-28" />
+            <button id="promo-btn" class="px-3 py-1 rounded bg-yellow-400 text-yellow-900 font-bold text-base hover:bg-yellow-500 transition">Ввести</button>
+        </div>
+        <div class="bg-white/80 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative">
+            <div class="absolute left-1/2 top-2 -translate-x-1/2 w-full flex flex-col items-center">
+                <div id="bonus-timer" class="text-base font-bold text-yellow-700 mb-1"></div>
+            </div>
+            <div class="mb-4 flex justify-center items-center gap-2">
+                <span class="text-lg text-yellow-900">Баланс:</span>
+                <span id="main-balance" class="text-2xl font-bold text-yellow-900">100</span>
+            </div>
+            <h1 class="text-4xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Симулятор Казика</h1>
+            <p class="mb-8 text-lg text-yellow-700">депни квартиру пж ;)</p>
+            <h2 class="text-2xl font-semibold mb-4 text-yellow-900">Выберите мини-игру:</h2>
+            <div class="flex flex-col gap-4">
+                <button id="btn-blackjack" class="py-3 px-6 rounded-lg bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-xl font-semibold transition-all duration-200">Блекджек</button>
+                <button id="btn-dice" class="py-3 px-6 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-xl font-semibold transition-all duration-200">Кости</button>
+            </div>
+        </div>
+    </div>
+    <div id="dice-game" class="hidden bg-black/40 p-8 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col gap-8 items-center">
+        <div class="flex w-full justify-between items-center">
+            <div class="flex flex-col items-start">
+                <span class="text-lg text-yellow-200">Баланс:</span>
+                <span id="dice-balance" class="text-2xl font-bold">100</span>
+            </div>
+            <div class="flex flex-col items-end">
+                <span class="text-lg text-yellow-200">Ставка:</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <button id="bet-minus" class="px-3 py-1 rounded bg-yellow-300 text-yellow-900 font-bold text-xl hover:bg-yellow-400 transition">-</button>
+                    <input id="dice-bet" type="number" min="10" max="50" value="10" class="w-20 px-2 py-1 rounded bg-yellow-100 text-yellow-900 font-bold text-lg outline-none text-center" />
+                    <button id="bet-plus" class="px-3 py-1 rounded bg-yellow-300 text-yellow-900 font-bold text-xl hover:bg-yellow-400 transition">+</button>
+                    <button id="dice-bet-btn" class="py-2 px-4 rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-lg font-semibold transition-all duration-200">депнуть!</button>
+                </div>
+            </div>
+        </div>
+        <div class="flex w-full justify-between items-center mt-8">
+            <div class="flex flex-col items-center w-1/2">
+                <span class="mb-2 text-lg">Ты</span>
+                <div class="flex gap-4">
+                    <div id="player-die1" class="dice w-24 h-24 bg-yellow-200 text-yellow-900 rounded-lg flex items-center justify-center text-6xl font-bold shadow-lg">⚀</div>
+                    <div id="player-die2" class="dice w-24 h-24 bg-yellow-200 text-yellow-900 rounded-lg flex items-center justify-center text-6xl font-bold shadow-lg">⚀</div>
+                </div>
+            </div>
+            <div class="flex flex-col items-center w-1/2">
+                <span class="mb-2 text-lg">Казик</span>
+                <div class="flex gap-4">
+                    <div id="casino-die1" class="dice w-24 h-24 bg-yellow-200 text-yellow-900 rounded-lg flex items-center justify-center text-6xl font-bold shadow-lg">⚀</div>
+                    <div id="casino-die2" class="dice w-24 h-24 bg-yellow-200 text-yellow-900 rounded-lg flex items-center justify-center text-6xl font-bold shadow-lg">⚀</div>
+                </div>
+            </div>
+        </div>
+        <div id="dice-result" class="text-xl font-bold text-yellow-300 mt-4"></div>
+        <button id="dice-back" class="mt-6 px-6 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-lg font-semibold transition-all duration-200">Назад</button>
+        <div id="dice-lose-message" class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 text-6xl font-extrabold text-red-600 opacity-0 pointer-events-none transition-opacity duration-700 select-none" style="user-select:none;">
+        </div>
+    </div>
+    <script>
+    // Элементы
+    const mainMenu = document.getElementById('main-menu');
+    const diceGame = document.getElementById('dice-game');
+    const btnDice = document.getElementById('btn-dice');
+    const btnBack = document.getElementById('dice-back');
+    const betInput = document.getElementById('dice-bet');
+    const betBtn = document.getElementById('dice-bet-btn');
+    const balanceSpan = document.getElementById('dice-balance');
+    const playerDie1 = document.getElementById('player-die1');
+    const playerDie2 = document.getElementById('player-die2');
+    const casinoDie1 = document.getElementById('casino-die1');
+    const casinoDie2 = document.getElementById('casino-die2');
+    const resultDiv = document.getElementById('dice-result');
+    let balance = 100;
+    function showDiceGame() {
+        mainMenu.classList.add('hidden');
+        diceGame.classList.remove('hidden');
+        updateAllBalances();
+        resetDice();
+        resultDiv.textContent = '';
+    }
+    function showMenu() {
+        diceGame.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+        updateAllBalances();
+    }
+    function updateBalance() {
+        balanceSpan.textContent = balance;
+    }
+    function resetDice() {
+        playerDie1.textContent = '⚀';
+        playerDie2.textContent = '⚀';
+        casinoDie1.textContent = '⚀';
+        casinoDie2.textContent = '⚀';
+    }
+    function rollDie() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+    function getDieSymbol(n) {
+        return ['⚀','⚁','⚂','⚃','⚄','⚅'][n-1];
+    }
+    btnDice.onclick = showDiceGame;
+    btnBack.onclick = showMenu;
+    betInput.addEventListener('input', function() {
+        let val = parseInt(betInput.value);
+        if (isNaN(val) || val < 10) val = 10;
+        if (val > 50) val = 50;
+        // Округляем до ближайшего меньшего кратного 10
+        val = Math.floor(val / 10) * 10;
+        betInput.value = val;
+    });
+    const loseMessages = ["да блин!","ладно,последний деп!","аргхх!!!"];
+    const loseMsgDiv = document.getElementById('dice-lose-message');
+    function showLoseMessage() {
+        const msg = loseMessages[Math.floor(Math.random() * loseMessages.length)];
+        const angle = (Math.random() * 40 - 20).toFixed(1); // от -20 до +20 градусов
+        loseMsgDiv.textContent = msg;
+        loseMsgDiv.style.opacity = '1';
+        loseMsgDiv.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        setTimeout(() => {
+            loseMsgDiv.style.opacity = '0';
+        }, 2000);
+    }
+    betBtn.onclick = function() {
+        let bet = parseInt(betInput.value);
+        if (isNaN(bet) || bet < 10 || bet > 50) {
+            resultDiv.textContent = 'Ставка от 10 до 50 монет!';
+            return;
+        }
+        if (bet > balance) {
+            resultDiv.textContent = 'Недостаточно монет!';
+            return;
+        }
+        // Анимация броска
+        let anim = 0;
+        const animInterval = setInterval(() => {
+            playerDie1.textContent = getDieSymbol(rollDie());
+            playerDie2.textContent = getDieSymbol(rollDie());
+            casinoDie1.textContent = getDieSymbol(rollDie());
+            casinoDie2.textContent = getDieSymbol(rollDie());
+            anim++;
+            if (anim > 15) {
+                clearInterval(animInterval);
+                // Итоговые значения
+                const p1 = rollDie();
+                const p2 = rollDie();
+                const c1 = rollDie();
+                const c2 = rollDie();
+                playerDie1.textContent = getDieSymbol(p1);
+                playerDie2.textContent = getDieSymbol(p2);
+                casinoDie1.textContent = getDieSymbol(c1);
+                casinoDie2.textContent = getDieSymbol(c2);
+                const playerSum = p1 + p2;
+                const casinoSum = c1 + c2;
+                if (playerSum > casinoSum) {
+                    balance += bet;
+                    resultDiv.textContent = `Ты выиграл! +${bet} монет`;
+                    updateBalanceAfterGame(balance);
+                } else if (playerSum < casinoSum) {
+                    balance -= bet;
+                    resultDiv.textContent = `Ты проиграл! -${bet} монет`;
+                    showLoseMessage();
+                    updateBalanceAfterGame(balance);
+                } else {
+                    resultDiv.textContent = 'Ничья!';
+                    updateBalanceAfterGame(balance);
+                }
+            }
+        }, 60);
+    };
+    const betMinus = document.getElementById('bet-minus');
+    const betPlus = document.getElementById('bet-plus');
+    betMinus.onclick = function() {
+        let val = parseInt(betInput.value);
+        if (isNaN(val)) val = 10;
+        val = Math.max(10, val - 10);
+        betInput.value = val;
+        betInput.dispatchEvent(new Event('input'));
+    };
+    betPlus.onclick = function() {
+        let val = parseInt(betInput.value);
+        if (isNaN(val)) val = 10;
+        val = Math.min(50, val + 10);
+        betInput.value = val;
+        betInput.dispatchEvent(new Event('input'));
+    };
+    // --- Промо-код ---
+    let promoBonus = 0;
+    const promoInput = document.getElementById('promo-input');
+    const promoBtn = document.getElementById('promo-btn');
+    promoBtn.onclick = function() {
+        if (promoInput.value.trim() === 'AFRON774') {
+            promoBonus += 10000;
+            updateAllBalances();
+            promoInput.value = '';
+        }
+    };
+    // --- Баланс и бонус ---
+    function getBalance() {
+        let data = JSON.parse(localStorage.getItem('kazik-balance') || '{}');
+        if (!data.amount) data.amount = 100;
+        return data;
+    }
+    function setBalance(amount) {
+        let data = getBalance();
+        data.amount = amount - promoBonus;
+        localStorage.setItem('kazik-balance', JSON.stringify(data));
+    }
+    function updateAllBalances() {
+        const data = getBalance();
+        balance = data.amount + promoBonus;
+        balanceSpan.textContent = balance;
+        document.getElementById('main-balance').textContent = balance;
+    }
+    // --- Таймер до 00:00 по Москве ---
+    function getMoscowMidnightDelay() {
+        const now = new Date();
+        // Москва UTC+3
+        const mskNow = new Date(now.getTime() + (3 - now.getTimezoneOffset()/60)*60*60*1000);
+        const nextMidnight = new Date(mskNow);
+        nextMidnight.setHours(24,0,0,0);
+        return nextMidnight - mskNow;
+    }
+    function updateBonusTimer() {
+        const ms = getMoscowMidnightDelay();
+        const sec = Math.floor(ms/1000)%60;
+        const min = Math.floor(ms/1000/60)%60;
+        const hr = Math.floor(ms/1000/60/60);
+        document.getElementById('bonus-timer').textContent = `до получения 100 монет: ${hr.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    }
+    // --- Ежедневный бонус ---
+    function checkDailyBonus() {
+        let data = getBalance();
+        const now = new Date();
+        // Москва UTC+3
+        const mskNow = new Date(now.getTime() + (3 - now.getTimezoneOffset()/60)*60*60*1000);
+        const today = mskNow.toISOString().slice(0,10);
+        if (data.lastBonus !== today) {
+            data.amount = (data.amount || 0) + 100;
+            data.lastBonus = today;
+            localStorage.setItem('kazik-balance', JSON.stringify(data));
+        }
+    }
+    // --- Инициализация ---
+    checkDailyBonus();
+    updateAllBalances();
+    updateBonusTimer();
+    setInterval(updateBonusTimer, 1000);
+    // --- Обновление баланса после игры ---
+    function updateBalanceAfterGame(newBalance) {
+        setBalance(newBalance);
+        updateAllBalances();
+    }
+    window.addEventListener('beforeunload', () => { promoBonus = 0; });
+    </script>
+</body>
+</html>
