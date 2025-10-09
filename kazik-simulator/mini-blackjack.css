@@ -1,0 +1,134 @@
+#blackjack-container {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    background: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#balance-bet {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 32px;
+    background: none !important;
+}
+#balance-bet div { font-size: 1.1em; }
+#bet-input { width: 60px; padding: 2px 7px; font-size: 1em; }
+#bet-btn { padding:2px 14px;font-size:1em;background:#746d55;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+#game-area {
+    margin-top: 20px;
+}
+#blackjack-actions { margin-top: 14px; }
+#blackjack-actions button { margin:0 8px;padding: 7px 22px; font-size: 1.1em; background: #377c23; color: #fff; border: none; border-radius: 8px; cursor: pointer;}
+#return-btn{background:#555;border:none;color:#fff;border-radius:6px;padding:7px 13px;cursor:pointer;}
+.flex-cards {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 80px;
+  background: none;
+}
+.cards-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+}
+.player-title {
+  margin-bottom: 4px;
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #cfc89a;
+}
+.cards-area {
+  display: flex;
+  gap: 0.7em;
+  margin-bottom: 2px;
+}
+.card-face {
+  width: 55px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.1em;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(145deg, #8e803d, #3e2d09 80%);
+  border-radius: 8px;
+  box-shadow: 0 1px 8px #000a;
+  border:2px solid #bda878;
+}
+.card-back {
+  width: 55px;
+  height: 80px;
+  background: repeating-linear-gradient(45deg,#4b4d1f,#4b4d1f 10px,#757561 10px,#757561 20px);
+  border-radius: 9px;
+  box-shadow: 0 1px 8px #222c;
+  border:2px solid #8e8b41;
+}
+.sum-area { font-size: 0.98em; color: #d1c76d; margin-bottom: 14px; min-height: 1.5em; }
+.card-face.premium {
+  position: relative;
+  width: 64px;
+  height: 94px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(160deg, #fffef8 75%, #ffeda8 90%, #f6cd66 100%);
+  box-shadow: 0 2px 16px #0002, 0 0 3px #3332;
+  border-radius: 12px;
+  border: 2.5px solid #cab062;
+  font-size: 2.2em;
+  color: #222;
+  overflow: hidden;
+}
+.card-face.premium.red { color: #c92a2a; border-color: #e99d9d; }
+.card-face.premium .card-corner {
+  position: absolute;
+  width: 1.7em;
+  height: 1.2em;
+  font-size: 0.95em;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  opacity: 0.77;
+  letter-spacing: 0.01em;
+}
+.card-face.premium .card-corner.tl {
+  top: 7px;
+  left: 9px;
+}
+.card-face.premium .card-corner.br {
+  right: 9px;
+  bottom: 5px;
+  transform: rotate(180deg);
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+.card-face.premium .card-corner span { font-size: 0.8em; margin-left: 0.06em; }
+.card-face.premium .card-suit {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  transform: translate(-50%, -50%);
+  font-size: 1.3em;
+  opacity: 0.69;
+  pointer-events: none;
+}
+.tablecloth-bg {
+    min-height:100vh;
+    min-width:100vw;
+    background: #196b37 !important;
+    box-shadow: none !important;
+}

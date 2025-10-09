@@ -23,6 +23,8 @@
             <div class="mb-4 flex justify-center items-center gap-2">
                 <span class="text-lg text-yellow-900">Баланс:</span>
                 <span id="main-balance" class="text-2xl font-bold text-yellow-900">100</span>
+                <button id="daily-gift-btn" title="Забрать подарок" style="margin-left:10px;padding:5px 10px;background:#fde68a;color:#b45309;font-size:1.6em;border:none;border-radius:8px;cursor:pointer;box-shadow:0 1px 6px #0002;">🎁</button>
+                <span id="bonus-timer" class="ml-3 text-yellow-700 text-base"></span>
             </div>
             <h1 class="text-4xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Симулятор Казика</h1>
             <p class="mb-8 text-lg text-yellow-700">депни квартиру пж ;)</p>
@@ -69,6 +71,13 @@
         <button id="dice-back" class="mt-6 px-6 py-2 rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-lg font-semibold transition-all duration-200">Назад</button>
         <div id="dice-lose-message" class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 text-6xl font-extrabold text-red-600 opacity-0 pointer-events-none transition-opacity duration-700 select-none" style="user-select:none;">
         </div>
+    </div>
+    <div id="blackjack-game" class="hidden bg-black/40 p-8 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col items-center z-20">
+        <div class="flex w-full justify-between items-center mb-4">
+            <span class="text-xl text-yellow-200">Мини-игра — Блекджек</span>
+            <button id="blackjack-back" class="px-4 py-2 ml-auto rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-lg font-semibold transition-all duration-200">Назад</button>
+        </div>
+        <iframe id="blackjack-iframe" src="mini-blackjack.html" class="w-full h-[620px] rounded-xl border-none" style="min-height:520px;background:#25231c;"></iframe>
     </div>
     <script>
     // Элементы
@@ -211,7 +220,7 @@
     // --- Баланс и бонус ---
     function getBalance() {
         let data = JSON.parse(localStorage.getItem('kazik-balance') || '{}');
-        if (!data.amount) data.amount = 100;
+        if (typeof data.amount === 'undefined') data.amount = 100;
         return data;
     }
     function setBalance(amount) {
@@ -265,6 +274,87 @@
         updateAllBalances();
     }
     window.addEventListener('beforeunload', () => { promoBonus = 0; });
+    const blackjackGame = document.getElementById('blackjack-game');
+    const btnBlackjack = document.getElementById('btn-blackjack');
+    const btnBlackjackBack = document.getElementById('blackjack-back');
+    const blackjackIframe = document.getElementById('blackjack-iframe');
+    btnBlackjack.onclick = showBlackjackGame;
+    btnBlackjackBack.onclick = showMenu;
+    function showBlackjackGame() {
+        mainMenu.classList.add('hidden');
+        blackjackGame.classList.remove('hidden');
+        updateAllBalances();
+        // При входе — обновить баланс внутри iframe
+        blackjackIframe.contentWindow?.postMessage({type:'update-balance',amount:balance},'*');
+    }
+    function showMenu() {
+        blackjackGame.classList.add('hidden');
+        diceGame.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+        updateAllBalances();
+        // Можно тоже отправить событие в iframe блэкджека — сбросить внутреннее состояние
+    }
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'blackjack-balance-update') {
+            // Получили из iframe новый баланс — обновим в localStorage и на экране
+            updateBalanceAfterGame(event.data.amount);
+        }
+    });
+    const dailyGiftBtn = document.getElementById('daily-gift-btn');
+    dailyGiftBtn.onclick = function() { claimDailyGift(); };
+    function getLastGiftData() {
+        let data = JSON.parse(localStorage.getItem('kazik-balance') || '{}');
+        return {amount: data.amount||0,lastGift: data.lastGift||null};
+    }
+    function setLastGiftData(amount,lastGift) {
+        let data = JSON.parse(localStorage.getItem('kazik-balance') || '{}');
+        data.amount = amount;
+        data.lastGift = lastGift;
+        localStorage.setItem('kazik-balance', JSON.stringify(data));
+    }
+    function canClaimGift() {
+        const giftData = getLastGiftData();
+        if (!giftData.lastGift) return true;
+        const last = new Date(giftData.lastGift);
+        const now = new Date();
+        return (now - last) >= 24*60*60*1000;
+    }
+    function claimDailyGift() {
+        if (!canClaimGift()) return;
+        const data = getLastGiftData();
+        const now = new Date().toISOString();
+        setLastGiftData((data.amount||0)+100, now);
+        updateAllBalances();
+        updateGiftBtnState();
+    }
+    function getNextGiftTimeout() {
+        const giftData = getLastGiftData();
+        if (!giftData.lastGift) return 0;
+        const last = new Date(giftData.lastGift);
+        const now = new Date();
+        let diff = 24*60*60*1000 - (now - last);
+        return diff > 0 ? diff : 0;
+    }
+    function updateGiftBtnState() {
+        if (canClaimGift()) {
+            dailyGiftBtn.disabled = false;
+            dailyGiftBtn.title = "Забрать ежедневный подарок!";
+            dailyGiftBtn.style.opacity = '1';
+            document.getElementById('bonus-timer').textContent = "заберите свой подарок!";
+        } else {
+            dailyGiftBtn.disabled = true;
+            dailyGiftBtn.title = "Подарок забран. Ждите новую возможность!";
+            dailyGiftBtn.style.opacity = '0.5';
+            // ТАЙМЕР
+            const ms = getNextGiftTimeout();
+            const sec = Math.floor(ms/1000)%60;
+            const min = Math.floor(ms/1000/60)%60;
+            const hr = Math.floor(ms/1000/60/60);
+            document.getElementById('bonus-timer').textContent = `До следующего подарка: ${hr.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        }
+    }
+    setInterval(updateGiftBtnState,1000);
+    updateGiftBtnState();
     </script>
 </body>
 </html>

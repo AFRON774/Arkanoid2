@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мини-игра: Блэкджек</title>
+    <link rel="stylesheet" href="mini-blackjack.css">
+    <style>body{font-family:sans-serif;background:#1d1b18;color:#fff;}</style>
+</head>
+<body class="tablecloth-bg">
+    <div id="blackjack-container" style="width:100vw;height:100vh;max-width:100vw;max-height:100vh;display:flex;justify-content:center;align-items:center;background:none;box-shadow:none;padding:0;">
+        <div id="balance-bet">
+            <div>Баланс: <span id="player-balance">1000</span></div>
+            <div>Ставка: <input type="number" id="bet-input" min="50" max="100" step="10" value="50"> <button id="bet-btn">Депать</button></div>
+        </div>
+        <div id="game-area" style="display:none;">
+            <div class="flex-cards">
+                <div class="cards-column">
+                    <div class="player-title">Казик</div>
+                    <div id="dealer-cards" class="cards-area"></div>
+                    <div class="sum-area">(сумма: <span id="dealer-sum"></span>)</div>
+                </div>
+                <div class="cards-column">
+                    <div class="player-title">Ты</div>
+                    <div id="player-cards" class="cards-area"></div>
+                    <div class="sum-area">(сумма: <span id="player-sum"></span>)</div>
+                </div>
+            </div>
+            <div id="blackjack-actions">
+                <button id="hit-btn">Взять</button>
+                <button id="stand-btn">Хватит</button>
+            </div>
+            <div id="blackjack-message"></div>
+            <button id="return-btn" style="margin-top:10px;display:none;">В меню</button>
+        </div>
+    </div>
+    <script src="mini-blackjack.js"></script>
+</body>
+</html>
